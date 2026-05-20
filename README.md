@@ -4,15 +4,27 @@
 
 ## 安装（所有用户都需要）
 
+## 安装
+
+### 方式一：直接下载（AI IDE/CLI 用户）
+
+从 GitHub 下载 `openvl` 文件夹放到你的 AI 的 skills 目录：
+
+```
+https://github.com/scp3500/openvl
+```
+
+### 方式二：npm（Cherry Studio 用户需要）
+
 ```bash
 npm install -g @scp3500/openvl
 ```
 
 ## 使用方式
 
-### 方式一：AI IDE / CLI（如 Pi、OpenCode、Cursor 等）
+### AI IDE / CLI（如 Pi、OpenCode、Cursor 等）
 
-安装后把 `node_modules/@scp3500/openvl` 复制到你的 AI 的 skills 目录即可。然后直接使用命令行：
+安装后直接使用命令行：
 
 ```bash
 openvl <图片路径或URL>       # 看图
