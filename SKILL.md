@@ -24,12 +24,21 @@ npm install -g @scp3500/openvl
 
 ### CLI（Pi / Claude Code / OpenCode 等）
 
-```bash
-openvl <图片路径或URL>     # 看图
-openvl --clip              # 读剪贴板截图
-```
+**可用命令：**
+
+| 命令 | 说明 |
+|------|------|
+| `openvl <路径/URL>` | 从文件或 URL 看图 |
+| `openvl --clip` | 从剪贴板读截图 |
 
 ### Cherry Studio（通过 MCP）
+
+**可用工具：**
+
+| 工具 | 说明 |
+|------|------|
+| `describe_image` | 传入图片路径/URL/base64 看图 |
+| `describe_clipboard` | 从剪贴板读截图 |
 
 | 字段 | 值 |
 |------|-----|
