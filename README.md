@@ -8,11 +8,11 @@
 
 ### 方式一：直接下载（AI IDE/CLI 用户）
 
-从 GitHub 下载 `openvl` 文件夹放到你的 AI 的 skills 目录：
+```bash
+git clone https://github.com/scp3500/openvl.git
+```
 
-```
-https://github.com/scp3500/openvl
-```
+把 `openvl` 文件夹放到你的 AI 的 skills 目录（如 `~/.pi/agent/skills/` 或 `~/.agents/skills/`）。
 
 ### 方式二：npm（Cherry Studio 用户需要）
 
