@@ -12,17 +12,7 @@ npm install -g @scp3500/openvl
 
 ### 方式一：AI IDE / CLI（如 Pi、OpenCode、Cursor 等）
 
-安装后需要把 skills 复制到 AI 的 skills 目录：
-
-```bash
-# 复制到 Pi skills 目录
-cp -r "$APPDATA/npm/node_modules/@scp3500/openvl" "$USERPROFILE/.pi/agent/skills/openvl"
-
-# 或复制到共享 skills 目录（Pi 和 OpenCode 都能读）
-cp -r "$APPDATA/npm/node_modules/@scp3500/openvl" "$USERPROFILE/.agents/skills/openvl"
-```
-
-然后就可以直接使用命令行：
+安装后把 `node_modules/@scp3500/openvl` 复制到你的 AI 的 skills 目录即可。然后直接使用命令行：
 
 ```bash
 openvl <图片路径或URL>       # 看图
