@@ -34,7 +34,7 @@ openvl --show-config         # 查看配置
 ```ini
 VISION_API_KEY=你的API密钥
 VISION_API_BASE=https://你的中转站/v1
-VISION_MODEL=gpt-5.4-mini
+VISION_MODEL=模型ID
 ```
 
 ### 环境变量配置（可选）
@@ -44,7 +44,7 @@ VISION_MODEL=gpt-5.4-mini
 ```bash
 set VISION_API_KEY=sk-xxx
 set VISION_API_BASE=https://你的中转站
-set VISION_MODEL=gpt-5.4-mini
+set VISION_MODEL=模型ID
 ```
 
 #### 2. MCP 服务器配置
