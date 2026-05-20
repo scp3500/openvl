@@ -143,43 +143,6 @@ def encode_image(image_path):
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-def find_latest_screenshot():
-    """查找最新的截图文件"""
-    import glob
-    
-    # 可能的截图目录
-    dirs = [
-        os.path.expanduser("~") + "/Desktop",  # Windows 桌面
-        os.path.expanduser("~") + "/Pictures/Screenshots",  # Windows
-        os.path.expanduser("~") + "/Desktop",  # macOS
-        "/sdcard/DCIM/Screenshots",  # Android
-        "/sdcard/Pictures/Screenshots",  # Android
-        "/storage/emulated/0/DCIM/Screenshots",  # Android
-        "/storage/emulated/0/Pictures/Screenshots",  # Android
-    ]
-    
-    exts = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp")
-    newest = None
-    newest_time = 0
-    
-    for d in dirs:
-        if not os.path.isdir(d):
-            continue
-        for ext in exts:
-            pattern = os.path.join(d, "*" + ext)
-            for f in glob.glob(pattern):
-                mtime = os.path.getmtime(f)
-                if mtime > newest_time:
-                    newest_time = mtime
-                    newest = f
-    
-    if newest:
-        return newest
-    
-    # Windows 剪贴板兜底
-    return None
-
-
 def describe_image(image_source, strength=None, from_clipboard=False):
     config = load_config()
     if not config["api_key"]:
@@ -248,10 +211,8 @@ if __name__ == "__main__":
         print("用法:")
         print("  openvl <图片路径或URL>       # 看图")
         print("  openvl --clip                # 从剪贴板读图")
-        print("  openvl --latest              # 读最新截图")
         print("  openvl <图片> -t 0.5         # 调强度")
         print("  openvl --set-key <密钥>      # 设置 API Key")
-        print("  openvl --latest              # 读最新截图")
         print("  openvl --set-base <地址>     # 设置 API 地址")
         print("  openvl --set-model <模型>    # 设置默认模型")
         print("  openvl --show-config         # 查看当前配置")
@@ -292,7 +253,6 @@ if __name__ == "__main__":
     img = None
     strength = None
     clip = False
-    latest = False
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "-t":
@@ -300,8 +260,6 @@ if __name__ == "__main__":
             strength = float(sys.argv[i]) if i < len(sys.argv) else None
         elif sys.argv[i] == "--clip":
             clip = True
-        elif sys.argv[i] == "--latest":
-            latest = True
         else:
             img = sys.argv[i]
         i += 1
@@ -315,14 +273,6 @@ if __name__ == "__main__":
 
     if clip:
         describe_image(None, strength, from_clipboard=True)
-    elif latest:
-        path = find_latest_screenshot()
-        if path:
-            print(f"找到最新截图: {path}")
-            describe_image(path, strength)
-        else:
-            print("未找到截图，试试 --clip")
-            sys.exit(1)
     elif img:
         describe_image(img, strength)
     else:
