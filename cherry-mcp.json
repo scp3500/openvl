@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "openvl": {
+      "description": "让 AI 看懂图片 - 支持 OCR、截图分析、图片描述",
+      "command": "npx",
+      "args": ["@scp3500/openvl", "--mcp"],
+      "env": {},
+      "timeout": 90
+    }
+  }
+}

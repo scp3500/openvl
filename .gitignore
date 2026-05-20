@@ -1,0 +1,5 @@
+config.env
+vision_history.json
+__pycache__/
+*.pyc
+.tmp_vision_*

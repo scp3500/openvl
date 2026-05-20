@@ -1,0 +1,23 @@
+{
+  "name": "@scp3500/openvl",
+  "version": "1.0.37",
+  "description": "让 AI 看懂图片 - 支持命令行和 MCP 服务器",
+  "bin": {
+    "openvl": "./bin/openvl"
+  },
+  "scripts": {
+    "postinstall": "node ./bin/postinstall.js"
+  },
+  "engines": {
+    "node": ">=12"
+  },
+  "keywords": [
+    "vision",
+    "gpt",
+    "image-description",
+    "ocr",
+    "multimodal",
+    "mcp"
+  ],
+  "license": "MIT"
+}

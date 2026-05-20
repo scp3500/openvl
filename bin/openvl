@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+const { spawn } = require('child_process');
+const path = require('path');
+
+const PKG_DIR = path.join(__dirname, '..');
+const MCP_JS = path.join(PKG_DIR, 'scripts', 'mcp_server.js');
+const VISION_PY = path.join(PKG_DIR, 'scripts', 'vision.py');
+const args = process.argv.slice(2);
+
+// 检测是否要启动 MCP 服务器
+if (args.includes('--mcp') || args[0] === 'openvl-mcp') {
+    const mode = args.includes('http') ? 'http' : 'stdio';
+    const proc = spawn(process.execPath, [MCP_JS], {
+        stdio: ['pipe', 'pipe', 'inherit'],
+        env: { ...process.env, OPENVL_MCP_MODE: mode },
+        cwd: PKG_DIR
+    });
+    // 双向转发 stdin/stdout
+    process.stdin.pipe(proc.stdin);
+    proc.stdout.pipe(process.stdout);
+    proc.on('exit', c => process.exit(c));
+} else {
+    const py = spawn('python', [VISION_PY, ...args], { stdio: 'inherit' });
+    py.on('exit', c => process.exit(c));
+}
