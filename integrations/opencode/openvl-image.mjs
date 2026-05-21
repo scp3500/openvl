@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-const TMP = process.env.TEMP || "C:\Users\33795\AppData\Local\Temp";
+const TMP = process.env.TEMP || process.env.TMP || "/tmp";
 
 // 启动时清理旧缓存（保留最近 100 张）
 try {
