@@ -133,9 +133,9 @@ async function callAPI(imageSource, fromClipboard, opts = {}) {
 
 // ====== MCP 协议 ======
 const tools = [
-    { name: 'describe_image', description: '描述图片内容，支持 OCR。',
+    { name: 'describe_image', description: '描述图片内容。用户有提问时请将问题填入 query 参数，视觉模型会直接回答。',
       inputSchema: { type: 'object', properties: { source: { type: 'string' }, query: { type: 'string' }, size: { type: 'number' }, thinking: { type: 'string' } }, required: ['source'] } },
-    { name: 'describe_clipboard', description: '读取剪贴板截图并描述（仅 Windows）',
+    { name: 'describe_clipboard', description: '读取剪贴板截图。用户有提问时请将问题填入 query 参数，视觉模型会直接回答。',
       inputSchema: { type: 'object', properties: { query: { type: 'string' }, size: { type: 'number' }, thinking: { type: 'string' } } } }
 ];
 
