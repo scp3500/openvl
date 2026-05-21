@@ -43,13 +43,13 @@ function log(m) { process.stderr.write('[OpenVL] ' + m + '\n'); }
 
 function loadConfig() {
     // 优先级：环境变量 > 配置文件
-    const cfg = { apiKey: '', apiBase: 'https://www.yysc.top/v1', model: 'gpt-5.4-mini' };
+    const cfg = { apiKey: '', apiBase: '', model: '' };
     
     // 1. 读环境变量（可在 Cherry Studio MCP 配置的环境变量栏设置）
     if (process.env.VISION_API_KEY && !process.env.VISION_API_KEY.includes('你的'))
         cfg.apiKey = process.env.VISION_API_KEY;
     if (process.env.VISION_API_BASE)
-        cfg.apiBase = process.env.VISION_API_BASE.replace(/\/+$/, '') + '/v1';
+        cfg.apiBase = process.env.VISION_API_BASE.replace(/\/+$/, '');
     if (process.env.VISION_MODEL)
         cfg.model = process.env.VISION_MODEL;
     
@@ -66,7 +66,7 @@ function loadConfig() {
                 if (s.startsWith('VISION_API_KEY=') && !s.includes('你的'))
                     cfg.apiKey = s.split('=')[1].trim();
                 else if (s.startsWith('VISION_API_BASE='))
-                    cfg.apiBase = s.split('=')[1].trim().replace(/\/+$/, '') + '/v1';
+                    cfg.apiBase = s.split('=')[1].trim().replace(/\/+$/, '');
                 else if (s.startsWith('VISION_MODEL='))
                     cfg.model = s.split('=')[1].trim();
             }
@@ -106,24 +106,23 @@ Write-Host $path`;
     return imgPath;
 }
 
-async function callAPI(imageSource, fromClipboard) {
+async function callAPI(imageSource, fromClipboard, opts = {}) {
     const config = loadConfig();
     if (!config.apiKey || config.apiKey.includes('你的'))
         throw new Error('请配置 API Key: npx @scp3500/openvl openvl --set-key sk-xxx');
 
-    // 用 Python 做 API 请求（更稳定的 TLS 兼容性）
     const VISION_PY = path.join(PKG_DIR, 'scripts', 'vision.py');
-    const args = fromClipboard ? ['--clip'] : [imageSource];
+    const args = [];
+    if (fromClipboard) args.push('-c');
+    if (imageSource && !fromClipboard) args.push(imageSource);
+    if (opts.query) args.push(opts.query);
+    if (opts.size) args.push('-s', String(opts.size));
+    if (opts.thinking) args.push('-T', opts.thinking);
     
     const result = spawnSync('python', [VISION_PY, ...args], {
         encoding: 'utf8',
         timeout: 90000,
-        env: {
-            ...process.env,
-            VISION_API_KEY: config.apiKey,
-            VISION_API_BASE: config.apiBase.replace(/\/v1$/, ''),
-            VISION_MODEL: config.model
-        }
+        env: { ...process.env, VISION_API_KEY: config.apiKey, VISION_API_BASE: config.apiBase, VISION_MODEL: config.model }
     });
     
     if (result.status !== 0) {
@@ -134,19 +133,24 @@ async function callAPI(imageSource, fromClipboard) {
 
 // ====== MCP 协议 ======
 const tools = [
-    { name: 'describe_image', description: '描述图片内容，支持 OCR。参数 source：图片路径/URL/base64',
-      inputSchema: { type: 'object', properties: { source: { type: 'string' } }, required: ['source'] } },
+    { name: 'describe_image', description: '描述图片内容，支持 OCR。参数 source：图片路径/URL/base64；可选 query：用户提问；size：图片最大边长；thinking：思考深度',
+      inputSchema: { type: 'object', properties: { source: { type: 'string' }, query: { type: 'string' }, size: { type: 'number' }, thinking: { type: 'string' } }, required: ['source'] } },
     { name: 'describe_clipboard', description: '读取剪贴板截图并描述（仅 Windows）',
-      inputSchema: { type: 'object', properties: {} } }
+      inputSchema: { type: 'object', properties: { query: { type: 'string' }, size: { type: 'number' }, thinking: { type: 'string' } } } }
 ];
 
 async function handleToolsCall(toolName, args) {
+    const opts = {};
+    if (args.query) opts.query = args.query;
+    if (args.size) opts.size = args.size;
+    if (args.thinking) opts.thinking = args.thinking;
+    
     if (toolName === 'describe_image') {
         if (!args.source) throw new Error('请提供图片路径');
-        return await callAPI(args.source, false);
+        return await callAPI(args.source, false, opts);
     }
     if (toolName === 'describe_clipboard') {
-        return await callAPI('', true);
+        return await callAPI('', true, opts);
     }
     throw new Error(`未知工具: ${toolName}`);
 }
