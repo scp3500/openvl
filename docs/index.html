@@ -36,6 +36,7 @@ nav a:hover{color:var(--accent)}
 .term-line .b{color:#60a5fa}
 .term-line .dim{color:#71717a}
 .term-line .s{color:#a78bfa}
+.term-line .cmd-line{color:#eab308}
 @keyframes blink{50%{opacity:0}}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:32px 0}
 .card{border:1px solid var(--border);border-radius:var(--radius);padding:24px}
@@ -95,13 +96,14 @@ footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.82em;borde
   <div class="install-code"><span class="dollar">$</span> npm install -g <span class="pkg">@scp3500/openvl</span></div>
 
   <div class="term" id="term">
-    <div class="term-head"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span><span class="title">openvl -c "这是什么"</span></div>
+    <div class="term-head"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span></div>
     <div class="term-body">
       <div class="term-line" id="tl1"><span class="dim">+ Thought · 368ms</span></div>
       <div class="term-line" id="tl2"><span class="dim">→ Skill "openvl"</span></div>
-      <div class="term-line" id="tl3"><span class="dim">+ Thought · 324ms</span></div>
-      <div class="term-line" id="tl4"><span class="g">$</span> <span class="b">openvl</span> <span class="s">"C:\Users\33795\AppData\Local\Temp\openvl_001.png"</span></div>
-      <div class="term-line" id="tl5"></div>
+      <div class="term-line" id="tl3"><span class="g">$</span> <span class="cmd-line">openvl -c "这是什么"</span></div>
+      <div class="term-line" id="tl4"><span class="dim">+ Thought · 324ms</span></div>
+      <div class="term-line" id="tl5"><span class="g">$</span> <span class="b">openvl</span> <span class="s">"C:\Users\33795\AppData\Local\Temp\openvl_001.png"</span></div>
+      <div class="term-line" id="tl6"></div>
       <div class="term-line" id="cursor"><span style="animation:blink 1s step-end infinite;color:#22c55e">▊</span></div>
     </div>
   </div>
@@ -177,7 +179,8 @@ const lines = [
   { id: 'tl1', delay: 200 },
   { id: 'tl2', delay: 500 },
   { id: 'tl3', delay: 800 },
-  { id: 'tl4', delay: 1100 },
+  { id: 'tl4', delay: 1200 },
+  { id: 'tl5', delay: 1500 },
 ];
 let t = 400;
 lines.forEach(l => {
@@ -185,7 +188,7 @@ lines.forEach(l => {
   t += l.delay;
 });
 setTimeout(() => {
-  const el = document.getElementById('tl5');
+  const el = document.getElementById('tl6');
   let i = 0;
   const iv = setInterval(() => {
     if (i < result.length) { el.textContent += result[i]; i++; }
