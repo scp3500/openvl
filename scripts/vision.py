@@ -389,6 +389,8 @@ if __name__ == "__main__":
         print("  看图:")
         print("    openvl <图片路径或URL>       # 从文件或URL看图")
         print("    openvl -c                    # 从剪贴板读图")
+        print("    openvl --stdin               # 从 stdin 读 data URI")
+        print("    openvl --base64 iVBOR...     # 直接传 base64 数据")
         print("    openvl <图片> -t 0.3         # 温度（0~1，越低越严谨）")
         print("    openvl <图片> -T low         # 思考深度 (low|medium|high)")
         print("    openvl <图片> -s 512         # 图片最大边长（默认1024，越小越省）")
@@ -443,6 +445,7 @@ if __name__ == "__main__":
     thinking_effort = None
     max_size = 1024
     clip = False
+    stdin_mode = False
     query_parts = []
     i = 1
     while i < len(sys.argv):
@@ -455,6 +458,13 @@ if __name__ == "__main__":
         elif sys.argv[i] in ("-s", "--size"):
             i += 1
             max_size = int(sys.argv[i]) if i < len(sys.argv) else 1024
+        elif sys.argv[i] == "--stdin":
+            stdin_mode = True
+        elif sys.argv[i] == "--base64":
+            i += 1
+            b64raw = sys.argv[i] if i < len(sys.argv) else ""
+            if b64raw:
+                img = f"data:image/jpeg;base64,{b64raw}"
         elif sys.argv[i] in ("--clip", "-c"):
             clip = True
         elif img is None and not clip:
@@ -463,6 +473,9 @@ if __name__ == "__main__":
             query_parts.append(sys.argv[i])
         i += 1
     query = " ".join(query_parts) if query_parts else None
+
+    if stdin_mode:
+        img = sys.stdin.read().strip()
 
     if sys.argv[1] == "--mcp":
         import mcp_server

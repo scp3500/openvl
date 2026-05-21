@@ -37,6 +37,8 @@ npm install -g @scp3500/openvl
 ```bash
 openvl <路径/URL>                  # 看图
 openvl -c                           # 读剪贴板截图
+openvl --stdin                      # 从 stdin 读 data URI
+openvl --base64 iVBOR...            # 直接传 base64
 openvl <路径> 用户的问题            # 带问题看图
 openvl -c 用户的问题                # 带问题读剪贴板
 openvl <图片> -t 0.3                # 温度（0~1，越低越严谨）

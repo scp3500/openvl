@@ -25,6 +25,8 @@ git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 ```bash
 openvl <图片路径或URL>            # 看图
 openvl -c                          # 从剪贴板读图
+openvl --stdin                     # 从 stdin 读 data URI
+openvl --base64 iVBOR...           # 直接传 base64 数据
 openvl <路径> 你的问题             # 带问题看图，视觉模型直接回答
 openvl -c 你的问题                 # 带问题读剪贴板
 openvl <图片> -t 0.3               # 温度（0~1，越低越严谨）
