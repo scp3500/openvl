@@ -177,25 +177,60 @@ const result = `这是一张网页截图，内容是硅基流动（SiliconFlow�
 累计完成 1 次有效推荐，共获得 16 元代金券。`;
 
 const lines = [
-  { id: 'tl1', delay: 200 },
-  { id: 'tl2', delay: 500 },
-  { id: 'tl3', delay: 800 },
-  { id: 'tl4', delay: 1200 },
-  { id: 'tl5', delay: 1500 },
+  { id: 'tl0', text: '[Image 1] 这是什么' },
+  { id: 'tl1', text: '+ Thought · 368ms' },
+  { id: 'tl2', text: '→ Skill "openvl"' },
+  { id: 'tl3', text: '$ openvl -c "这是什么"' },
+  { id: 'tl4', text: '+ Thought · 324ms' },
+  { id: 'tl5', text: '$ openvl "C:\Users\33795\AppData\Local\Temp\openvl_001.png"' },
 ];
-let t = 400;
-lines.forEach(l => {
-  setTimeout(() => { document.getElementById(l.id).style.opacity = '1'; }, t);
-  t += l.delay;
-});
-setTimeout(() => {
-  const el = document.getElementById('tl6');
-  let i = 0;
-  const iv = setInterval(() => {
-    if (i < result.length) { el.textContent += result[i]; i++; }
-    else { clearInterval(iv); document.getElementById('cursor').style.display = 'none'; }
-  }, 6);
-}, 2800);
-</script>
+
+let playTimer = null;
+
+function playDemo() {
+  lines.forEach(l => {
+    const el = document.getElementById(l.id);
+    if (el) { el.textContent = ''; el.style.opacity = '0'; }
+  });
+  const r = document.getElementById('tl6');
+  if (r) { r.textContent = ''; r.style.opacity = '0'; }
+  const c = document.getElementById('cursor');
+  if (c) c.style.display = 'block';
+
+  let totalDelay = 0;
+  lines.forEach((l, idx) => {
+    const el = document.getElementById(l.id);
+    if (!el) return;
+    const speed = 22;
+    const wait = idx === 0 ? 400 : 500;
+    totalDelay += wait;
+    setTimeout(() => {
+      el.style.opacity = '1';
+      let i = 0;
+      const iv = setInterval(() => {
+        if (i < l.text.length) { el.textContent += l.text[i]; i++; }
+        else clearInterval(iv);
+      }, speed);
+    }, totalDelay);
+  });
+
+  setTimeout(() => {
+    const el = document.getElementById('tl6');
+    if (!el) return;
+    el.style.opacity = '1';
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < result.length) { el.textContent += result[i]; i++; }
+      else {
+        clearInterval(iv);
+        const c = document.getElementById('cursor');
+        if (c) c.style.display = 'none';
+        playTimer = setTimeout(playDemo, 4000);
+      }
+    }, 6);
+  }, totalDelay + 1200);
+}
+
+setTimeout(playDemo, 400);</script>
 </body>
 </html>
