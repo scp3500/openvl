@@ -67,32 +67,29 @@ VISION_API_BASE=https://你的中转站/v1/chat/completions
 VISION_MODEL=模型ID
 ```
 
-## 各工具怎么用
+## 各工具集成
 
-| 工具 | 贴图方式 | 操作步骤 |
-|------|----------|----------|
-| **OpenCode** | 直接粘贴到聊天框 | 装插件 → 配 AGENTS.md → 贴图自动读 |
-| **Claude Code / Pi** | 传文件路径或截图 | 装 skills → AI 自动识别图片 |
-| **Cherry Studio** | 发图片给 AI | 配 MCP → 让 AI 调工具 |
+| 工具 | 集成方式 | 说明 |
+|------|----------|------|
+| **OpenCode** | 插件 + AGENTS.md | 粘贴图片后自动分析，无需额外操作 |
+| **Claude Code** | skills | AI 识别图片路径后自动调用 openvl |
+| **Pi** | skills | 同上 |
+| **Cherry Studio** | MCP 服务器 | 通过 describe_image 工具手动调用 |
 
-### OpenCode（推荐）
+### OpenCode
 
-装好插件后，粘贴图片到聊天框，AI 自动看图回答。
+安装插件后，粘贴图片到聊天框即可自动触发 openvl 分析。
 
 ```bash
-# 1. 装插件
 mkdir -p ~/.config/opencode/plugin
 cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
-
-# 2. opencode.json 加上这行
-# "plugin": ["./plugin/openvl-image.mjs"]
-
-# 3. AGENTS.md 加规则（参考 integrations/README.md）
 ```
+
+在 `opencode.json` 中添加插件声明，并在 `AGENTS.md` 中配置图片处理规则（详见 `integrations/README.md`）。
 
 ### Claude Code / Pi
 
-只要把仓库克隆到 skills 目录，AI 遇到图片就会自动调 openvl。
+将仓库克隆到 skills 目录即可生效：
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
@@ -100,7 +97,7 @@ git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
 
 ### Cherry Studio
 
-配成 MCP 服务器，让 AI 调 `describe_image` 工具：
+配置为 MCP 服务器，AI 通过 `describe_image` 或 `describe_clipboard` 工具调用：
 
 | 字段 | 值 |
 |------|-----|

@@ -65,32 +65,29 @@ VISION_API_BASE=https://your-proxy/v1/chat/completions
 VISION_MODEL=model-id
 ```
 
-## How to Use with Each Tool
+## Tool Integration
 
-| Tool | Paste Method | Setup |
-|------|-------------|-------|
-| **OpenCode** | Paste directly into chat | Install plugin + AGENTS.md → auto-read |
-| **Claude Code / Pi** | File path or screenshot | Install skills → AI auto-detects images |
-| **Cherry Studio** | Send image to AI | Configure MCP → ask AI to use tool |
+| Tool | Method | Description |
+|------|--------|-------------|
+| **OpenCode** | Plugin + AGENTS.md | Pasted images are analyzed automatically |
+| **Claude Code** | skills | AI auto-calls openvl when it sees image paths |
+| **Pi** | skills | Same as above |
+| **Cherry Studio** | MCP server | Manual invocation via describe_image tool |
 
-### OpenCode (Recommended)
+### OpenCode
 
-After setup, just paste an image into the chat. The AI reads it automatically.
+After installing the plugin, pasting an image into the chat triggers openvl automatically.
 
 ```bash
-# 1. Install plugin
 mkdir -p ~/.config/opencode/plugin
 cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
-
-# 2. Add to opencode.json
-# "plugin": ["./plugin/openvl-image.mjs"]
-
-# 3. Add rules to AGENTS.md (see integrations/README.md)
 ```
+
+Add the plugin declaration to `opencode.json` and configure image handling rules in `AGENTS.md` (see `integrations/README.md`).
 
 ### Claude Code / Pi
 
-Clone the repo to the skills directory, and the AI will auto-use openvl when it sees an image.
+Clone the repository to the skills directory:
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
@@ -98,7 +95,7 @@ git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
 
 ### Cherry Studio
 
-Configure as MCP server, then ask the AI to use `describe_image`:
+Configure as an MCP server. The AI invokes `describe_image` or `describe_clipboard` as needed:
 
 | Field | Value |
 |-------|-------|
