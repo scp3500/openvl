@@ -39,7 +39,10 @@ openvl -cfg                  # 查看配置
 
 ## 配置
 
-编辑 `config.env`：
+编辑配置文件（`openvl` 目录下的 `config.env`）：
+
+- **npm 安装：** `<npm目录>/node_modules/@scp3500/openvl/config.env`
+- **skills 目录：** `<skills目录>/openvl/config.env`
 
 ```ini
 VISION_API_KEY=你的API密钥
@@ -47,7 +50,7 @@ VISION_API_BASE=https://你的中转站/v1
 VISION_MODEL=模型ID
 ```
 
-也支持通过系统环境变量配置。
+也支持系统环境变量（优先级更高）。
 
 ## 原理
 
