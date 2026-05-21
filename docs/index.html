@@ -3,184 +3,198 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenVL</title>
+<title>OpenVL — 给 AI 装上眼睛</title>
 <style>
+:root{--bg:#fff;--fg:#0a0a0b;--muted:#71717a;--border:#e4e4e7;--accent:#2563eb;--accent-bg:#eff6ff;--code-bg:#f4f4f5;--radius:8px}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1d1d1f;font-size:15px;line-height:1.6}
+body{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:800px;margin:0 auto;padding:0 24px}
+
+/* Nav */
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;max-width:848px;margin:0 auto}
+nav .logo{font-weight:700;font-size:1.1em}
+nav a{color:var(--muted);font-size:.88em;margin-left:20px;text-decoration:none}
+nav a:hover{color:var(--fg)}
 
 /* Hero */
-.hero{max-width:800px;margin:0 auto;padding:48px 24px 32px;text-align:center}
-.hero h1{font-size:2.6em;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
-.hero p{color:#6e6e73;margin-bottom:20px}
+.hero{padding:80px 0 48px;text-align:center}
+.hero h1{font-size:3em;font-weight:700;letter-spacing:-1px;margin-bottom:12px}
+.hero p{font-size:1.1em;color:var(--muted);max-width:440px;margin:0 auto 24px}
+.hero .install-code{display:inline-flex;align-items:center;gap:8px;background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-family:ui-monospace,monospace;font-size:.88em}
+.hero .install-code .dollar{color:#22c55e}
+.hero .install-code .pkg{color:var(--accent)}
 
-/* Term demo */
-.demo-term{max-width:680px;margin:0 auto;background:#f5f5f7;border:1px solid #e5e5ea;border-radius:10px;overflow:hidden;text-align:left}
-.demo-term .bar{display:flex;align-items:center;gap:6px;padding:8px 14px;background:#e8e8ed;font-size:.75em;color:#6e6e73}
-.demo-term .bar .dot{width:8px;height:8px;border-radius:50%}
-.demo-term .bar .dot:nth-child(1){background:#fe5f57}
-.demo-term .bar .dot:nth-child(2){background:#febc2e}
-.demo-term .bar .dot:nth-child(3){background:#2bc840}
-.demo-term .body{padding:12px 16px;font-family:ui-monospace,'SF Mono',monospace;font-size:.82em;line-height:1.7}
-.demo-term .body .tag{display:inline-block;background:#e8e8ed;padding:1px 6px;border-radius:4px;font-size:.85em}
-.demo-term .body .prompt{color:#30a46c}
-.demo-term .body .cmd{color:#0066cc}
-.demo-term .body .dim{color:#8e8e93}
-.demo-term .body .res{color:#1d1d1f;white-space:pre-wrap}
-.demo-term .body .thought{color:#8e8e93;font-style:italic}
+/* Terminal preview */
+.term{margin:40px auto 0;background:var(--code-bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;text-align:left}
+.term-head{display:flex;align-items:center;gap:6px;padding:8px 14px;border-bottom:1px solid var(--border)}
+.term-head span{width:8px;height:8px;border-radius:50%}
+.term-head span:nth-child(1){background:#ef4444}
+.term-head span:nth-child(2){background:#eab308}
+.term-head span:nth-child(3){background:#22c55e}
+.term-head .title{font-size:.78em;color:var(--muted);margin-left:8px}
+.term-body{padding:14px 18px;font-family:ui-monospace,monospace;font-size:.82em;line-height:1.8}
+.term-line{min-height:1.4em}
+.term-line .g{color:#22c55e}
+.term-line .b{color:var(--accent)}
+.term-line .dim{color:var(--muted)}
+.term-line .s{color:#8b5cf6}
 
-@keyframes blink{50%{opacity:0}}
-.cursor::after{content:"▊";animation:blink 1s step-end infinite;color:#30a46c}
+/* Features */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:32px 0}
+.card{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.card h3{font-size:.95em;margin-bottom:6px}
+.card p{font-size:.85em;color:var(--muted);line-height:1.5}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
 
-/* Sections */
-.section{max-width:800px;margin:0 auto;padding:40px 24px}
-.section-title{font-size:.78em;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
+/* Section */
+.sec{padding:48px 0}
+.sec-title{font-size:.78em;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:20px}
 
-/* Flow */
-.flow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.flow-item{background:#f5f5f7;border:1px solid #e5e5ea;border-radius:8px;padding:16px 20px;text-align:center;flex:1;min-width:100px}
-.flow-item .icon{font-size:1.5em;margin-bottom:4px}
-.flow-item .label{font-size:.82em;color:#6e6e73}
-
-/* Cmd grid */
-.cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
-.cmd-item{background:#f5f5f7;border:1px solid #e5e5ea;border-radius:6px;padding:8px 12px;font-size:.82em}
-.cmd-item code{color:#0066cc;font-family:ui-monospace,monospace;font-size:.95em}
-.cmd-item .desc{color:#8e8e93;font-size:.9em}
+/* Cmd list */
+.cmds{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cmd-row{display:flex;justify-content:space-between;padding:6px 12px;background:var(--code-bg);border-radius:4px;font-size:.82em;font-family:ui-monospace,monospace}
+.cmd-row .c{color:var(--accent)}
+.cmd-row .d{color:var(--muted)}
+@media(max-width:600px){.cmds{grid-template-columns:1fr}}
 
 /* Table */
-table{width:100%;border-collapse:collapse;font-size:.82em;background:#fff;border:1px solid #e5e5ea;border-radius:8px;overflow:hidden}
-td,th{padding:8px 12px;text-align:left;border-bottom:1px solid #e5e5ea}
-th{background:#f5f5f7;color:#6e6e73;font-weight:500;font-size:.78em;text-transform:uppercase}
-.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.85em;font-weight:500}
-.tag.green{background:#e8f8ee;color:#1a7d36}
-.tag.yellow{background:#fef7e8;color:#9a6b00}
-.tag.gray{background:#f5f5f7;color:#6e6e73}
+table{width:100%;border-collapse:collapse;font-size:.85em;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+td,th{padding:8px 14px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:var(--code-bg);font-weight:500;color:var(--muted);font-size:.78em;text-transform:uppercase}
+.badge{display:inline-block;padding:1px 8px;border-radius:4px;font-size:.82em;font-weight:500}
+.badge.g{background:#dcfce7;color:#166534}
+.badge.y{background:#fef9c3;color:#854d0e}
+.badge.gr{background:#f4f4f5;color:#52525b}
 
 /* Install */
-.install-box{background:#f5f5f7;border:1px solid #e5e5ea;border-radius:8px;padding:20px}
-.install-box pre{background:#fff;padding:12px;border-radius:6px;font-size:.82em;margin:8px 0;font-family:ui-monospace,monospace;border:1px solid #e5e5ea}
-.btns{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0}
-.btn{display:inline-flex;padding:8px 18px;border-radius:6px;font-weight:500;font-size:.88em}
-.btn.primary{background:#0066cc;color:#fff}
-.btn.secondary{background:#fff;color:#1d1d1f;border:1px solid #d2d2d7}
-.btn.secondary:hover{text-decoration:none}
+.install-box{background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.install-box pre{background:var(--bg);padding:12px;border-radius:6px;border:1px solid var(--border);font-family:ui-monospace,monospace;font-size:.85em;margin:8px 0}
+.btns{display:flex;gap:8px;margin:12px 0 0}
+.btn{display:inline-flex;align-items:center;padding:8px 18px;border-radius:var(--radius);font-weight:500;font-size:.88em;text-decoration:none;transition:all .15s}
+.btn.p{background:var(--accent);color:#fff}
+.btn.p:hover{opacity:.9}
+.btn.s{background:var(--bg);color:var(--fg);border:1px solid var(--border)}
+.btn.s:hover{border-color:var(--accent);text-decoration:none}
 
-footer{padding:32px 24px;text-align:center;color:#8e8e93;font-size:.8em;border-top:1px solid #e5e5ea}
+footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.82em;border-top:1px solid var(--border)}
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <h1>OpenVL</h1>
-  <p>让没有视觉能力的 AI 模型也能看懂图片</p>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px">
-    <span style="background:#f5f5f7;border:1px solid #e5e5ea;border-radius:6px;padding:6px 12px;font-family:monospace;font-size:.82em"><span style="color:#30a46c">$</span> npm install -g <span style="color:#0066cc">@scp3500/openvl</span></span>
+<nav>
+  <span class="logo">OpenVL</span>
+  <div>
+    <a href="https://github.com/scp3500/openvl">GitHub</a>
+    <a href="https://www.npmjs.com/package/@scp3500/openvl">npm</a>
   </div>
+</nav>
 
-  <div class="demo-term" id="demo">
-    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span> openvl -c "这张图是什么"</div>
-    <div class="body">
-      <div id="l1" style="display:none"><span class="dim">+ Thought · 368ms</span></div>
-      <div id="l2" style="display:none">→ <span class="tag">Skill "openvl"</span></div>
-      <div id="l3" style="display:none"><span class="dim">+ Thought · 324ms</span></div>
-      <div id="l4" style="display:none"><span class="prompt">$</span> <span class="cmd">openvl "C:\Users\33795\AppData\Local\Temp\openvl_001.png"</span></div>
-      <div id="l5" style="display:none"></div>
-      <div id="cursor-line" style="display:none"><span class="cursor"></span></div>
+<div class="wrap">
+
+<div class="hero">
+  <h1>给 AI 装上眼睛</h1>
+  <p>让 DeepSeek、OpenCode、Claude Code 等非视觉模型也能看懂图片</p>
+  <div class="install-code"><span class="dollar">$</span> npm install -g <span class="pkg">@scp3500/openvl</span></div>
+
+  <div class="term" id="term">
+    <div class="term-head"><span></span><span></span><span></span><span class="title">openvl -c "这是什么"</span></div>
+    <div class="term-body">
+      <div class="term-line" id="tl1"><span class="dim">+ Thought · 368ms</span></div>
+      <div class="term-line" id="tl2"><span class="dim">→ Skill "openvl"</span></div>
+      <div class="term-line" id="tl3"><span class="dim">+ Thought · 324ms</span></div>
+      <div class="term-line" id="tl4"><span class="g">$</span> <span class="b">openvl</span> <span class="s">"C:\Users\33795\AppData\Local\Temp\openvl_001.png"</span></div>
+      <div class="term-line" id="tl5"></div>
+      <div class="term-line" id="cursor"><span style="animation:blink 1s step-end infinite;color:#22c55e">▊</span></div>
     </div>
   </div>
 </div>
 
-<div class="section">
-  <h2 class="section-title">工作流程</h2>
-  <div class="flow">
-    <div class="flow-item"><div class="icon">📸</div><div class="label">截图</div></div>
-    <div class="flow-item"><div class="icon">⚡</div><div class="label">openvl 分析</div></div>
-    <div class="flow-item"><div class="icon">📝</div><div class="label">返回描述</div></div>
-    <div class="flow-item"><div class="icon">🤖</div><div class="label">AI 回答</div></div>
+<style>@keyframes blink{50%{opacity:0}}</style>
+
+<div class="grid">
+  <div class="card"><h3>截图自动分析</h3><p>粘贴图片到聊天框，自动识别内容并回答你的问题</p></div>
+  <div class="card"><h3>多 API 支持</h3><p>兼容 OpenAI 格式、Responses API、Google Gemini、Claude</p></div>
+  <div class="card"><h3>多工具集成</h3><p>OpenCode 全自动、Claude Code/Pi 半自动、Cherry Studio 用 MCP</p></div>
+  <div class="card"><h3>多图一次请求</h3><p>同时传多张图，视觉模型一次性分析，省时省 token</p></div>
+</div>
+
+<div class="sec">
+  <div class="sec-title">命令参考</div>
+  <div class="cmds">
+    <div class="cmd-row"><span><span class="c">openvl</span> &lt;路径&gt;</span><span class="d">直接看图</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> -c</span><span class="d">读剪贴板截图</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> -c "提问"</span><span class="d">截图 + 提问</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> --stdin</span><span class="d">管道传 data URI</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> a.png b.png</span><span class="d">多图一次分析</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> doctor</span><span class="d">环境诊断</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> setup</span><span class="d">交互式配置</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> -s 512</span><span class="d">设置图片尺寸</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> -T high</span><span class="d">思考深度</span></div>
+    <div class="cmd-row"><span><span class="c">openvl</span> -t 0.3</span><span class="d">温度控制</span></div>
   </div>
 </div>
 
-<div class="section">
-  <h2 class="section-title">命令</h2>
-  <div class="cmd-grid">
-    <div class="cmd-item"><code>openvl &lt;路径&gt;</code><div class="desc">看图</div></div>
-    <div class="cmd-item"><code>openvl -c</code><div class="desc">剪贴板截图</div></div>
-    <div class="cmd-item"><code>openvl -c "提问"</code><div class="desc">截图+提问</div></div>
-    <div class="cmd-item"><code>openvl --stdin</code><div class="desc">管道传图</div></div>
-    <div class="cmd-item"><code>openvl a.png b.png</code><div class="desc">多图一次</div></div>
-    <div class="cmd-item"><code>openvl doctor</code><div class="desc">诊断</div></div>
-    <div class="cmd-item"><code>openvl setup</code><div class="desc">配置</div></div>
-    <div class="cmd-item"><code>openvl -s 512</code><div class="desc">尺寸</div></div>
-  </div>
-</div>
-
-<div class="section">
-  <h2 class="section-title">集成</h2>
+<div class="sec">
+  <div class="sec-title">集成方式</div>
   <table>
     <tr><th>工具</th><th>方式</th><th>体验</th></tr>
-    <tr><td>OpenCode</td><td>插件 + AGENTS.md</td><td><span class="tag green">全自动</span></td></tr>
-    <tr><td>Claude Code</td><td>skills</td><td><span class="tag yellow">半自动</span></td></tr>
-    <tr><td>Pi</td><td>skills</td><td><span class="tag yellow">半自动</span></td></tr>
-    <tr><td>Cherry Studio</td><td>MCP</td><td><span class="tag gray">手动</span></td></tr>
+    <tr><td>OpenCode</td><td>插件 + AGENTS.md</td><td><span class="badge g">全自动</span></td></tr>
+    <tr><td>Claude Code</td><td>skills</td><td><span class="badge y">半自动</span></td></tr>
+    <tr><td>Pi</td><td>skills</td><td><span class="badge y">半自动</span></td></tr>
+    <tr><td>Cherry Studio</td><td>MCP</td><td><span class="badge gr">手动</span></td></tr>
   </table>
 </div>
 
-<div class="section">
-  <h2 class="section-title">安装</h2>
+<div class="sec">
+  <div class="sec-title">安装</div>
   <div class="install-box">
-    <pre>npm install -g @scp3500/openvl
+    <pre><span style="opacity:.5"># 安装</span>
+npm install -g @scp3500/openvl
+
+<span style="opacity:.5"># 配置 API</span>
 openvl setup
-openvl -c "图中是什么"</pre>
+
+<span style="opacity:.5"># 截图提问</span>
+openvl -c "这张图里有什么"</pre>
     <div class="btns">
-      <a class="btn primary" href="https://github.com/scp3500/openvl">GitHub →</a>
-      <a class="btn secondary" href="https://www.npmjs.com/package/@scp3500/openvl">npm</a>
+      <a class="btn p" href="https://github.com/scp3500/openvl">GitHub →</a>
+      <a class="btn s" href="https://www.npmjs.com/package/@scp3500/openvl">npm</a>
     </div>
   </div>
 </div>
 
-<footer>MIT · <a href="https://github.com/scp3500/openvl">scp3500/openvl</a></footer>
+</div>
+
+<footer>MIT License · <a href="https://github.com/scp3500/openvl">scp3500/openvl</a></footer>
 
 <script>
-const text = `这是一张网页截图，内容是硅基流动（SiliconFlow）后台的"推荐官计划"页面。
+const result = `这是一张网页截图，内容是硅基流动（SiliconFlow）后台的"推荐官计划"页面。
 
-左侧导航栏包含：实名认证、API 密钥、余额充值、费用明细、发票开具、推荐官计划、认证享专礼、我的邀请记录。
+左侧导航：实名认证、API 密钥、余额充值、费用明细、发票开具、推荐官计划。
 
-主内容区顶部标题"推荐官计划"，右侧提示"每邀一人注册认证即得 ¥16 全平台通用代金券"。
-
+推荐官福利：每邀一人注册认证即得 16 元代金券
 邀请码：eQMNF05N
-邀请链接：cloud.siliconflow.cn/i/eQmNF...
-累计已完成 1 次有效推荐，共获得 16 元代金券。`;
+累计完成 1 次有效推荐，共获得 16 元代金券。`;
 
 const lines = [
-  { id: 'l1', delay: 300 },
-  { id: 'l2', delay: 700 },
-  { id: 'l3', delay: 1100 },
-  { id: 'l4', delay: 1500 },
+  { id: 'tl1', delay: 200 },
+  { id: 'tl2', delay: 500 },
+  { id: 'tl3', delay: 800 },
+  { id: 'tl4', delay: 1100 },
 ];
-
-let t = 500;
+let t = 400;
 lines.forEach(l => {
-  setTimeout(() => {
-    document.getElementById(l.id).style.display = 'block';
-  }, t);
+  setTimeout(() => { document.getElementById(l.id).style.opacity = '1'; }, t);
   t += l.delay;
 });
-
 setTimeout(() => {
-  const l5 = document.getElementById('l5');
-  l5.style.display = 'block';
+  const el = document.getElementById('tl5');
   let i = 0;
   const iv = setInterval(() => {
-    if (i < text.length) {
-      l5.textContent += text[i];
-      i++;
-    } else {
-      clearInterval(iv);
-      setTimeout(() => { document.getElementById('cursor-line').style.display = 'none'; }, 500);
-    }
-  }, 8);
-  document.getElementById('cursor-line').style.display = 'block';
-}, 3500);
+    if (i < result.length) { el.textContent += result[i]; i++; }
+    else { clearInterval(iv); document.getElementById('cursor').style.display = 'none'; }
+  }, 6);
+}, 2800);
 </script>
 </body>
 </html>
