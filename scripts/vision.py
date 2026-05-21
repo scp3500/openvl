@@ -411,6 +411,48 @@ def setup():
     print("=" * 40)
     print()
     
+    # skills 安装
+    print("AI IDE 集成")
+    print("-" * 30)
+    import shutil
+    skills_map = {
+        Path.home() / ".agents" / "skills" / "openvl": ".agents/skills/openvl",
+        Path.home() / ".claude" / "skills" / "openvl": ".claude/skills/openvl",
+        Path.home() / ".pi" / "agent" / "skills" / "openvl": "Pi skills",
+    }
+    for p, name in skills_map.items():
+        print(f"  {'✓' if p.exists() else '·'} {name}")
+    if input("安装 skills？(y/N): ").lower() == "y":
+        for p, name in skills_map.items():
+            try:
+                p.parent.mkdir(parents=True, exist_ok=True)
+                if p.exists(): shutil.rmtree(p)
+                shutil.copytree(SKILL_DIR, p)
+                print(f"  ✓ {name}")
+            except Exception as e:
+                print(f"  ✗ {name}: {e}")
+    
+    # OpenCode 插件
+    print()
+    print("OpenCode 插件")
+    print("-" * 30)
+    oc_plugin = Path.home() / ".config" / "opencode" / "plugin" / "openvl-image.mjs"
+    print(f"  {'✓' if oc_plugin.exists() else '·'} OpenCode 插件")
+    if not oc_plugin.exists() and input("安装？(y/N): ").lower() == "y":
+        oc_plugin.parent.mkdir(parents=True, exist_ok=True)
+        src = SKILL_DIR / "integrations" / "opencode" / "openvl-image.mjs"
+        if src.exists():
+            shutil.copy2(src, oc_plugin)
+            print("  ✓ 插件已安装")
+            print('  → 在 opencode.json 添加: "plugin": ["./plugin/openvl-image.mjs"]')
+        else:
+            print("  ✗ 插件源文件未找到")
+    
+    # API 配置
+    print()
+    print("=" * 40)
+    print()
+    
     cfg = load_config()
     
     # API Key
