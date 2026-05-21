@@ -24,12 +24,12 @@ nav a:hover{color:var(--accent)}
 .hero .install-code .pkg{color:var(--accent)}
 
 .term{margin:36px auto 0;max-width:680px;background:#1a1b1e;border-radius:10px;overflow:hidden;text-align:left;box-shadow:0 4px 20px rgba(0,0,0,.1)}
-.term-head{display:flex;align-items:center;gap:6px;padding:8px 14px;background:#1a1b1e;border-bottom:1px solid #27272a}
-.term-head span{width:8px;height:8px;border-radius:50%}
-.term-head span:nth-child(1){background:#ef4444}
-.term-head span:nth-child(2){background:#eab308}
-.term-head span:nth-child(3){background:#22c55e}
-.term-head .title{font-size:.8em;color:#a1a1aa;margin-left:10px;white-space:nowrap;flex-shrink:0}
+.term-head{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1a1b1e;border-bottom:1px solid #27272a}
+.term-dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.term-dot:nth-child(1){background:#ef4444}
+.term-dot:nth-child(2){background:#eab308}
+.term-dot:nth-child(3){background:#22c55e}
+.term-head .title{font-size:.82em;color:#a1a1aa;margin-left:auto}
 .term-body{padding:16px 20px;color:#d4d4d8;font-size:.88em;line-height:1.8}
 .term-line{min-height:1.3em}
 .term-line .g{color:#22c55e}
@@ -95,7 +95,7 @@ footer{padding:32px 0;text-align:center;color:var(--muted);font-size:.82em;borde
   <div class="install-code"><span class="dollar">$</span> npm install -g <span class="pkg">@scp3500/openvl</span></div>
 
   <div class="term" id="term">
-    <div class="term-head"><span></span><span></span><span></span><span class="title">openvl -c "这是什么"</span></div>
+    <div class="term-head"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span><span class="title">openvl -c "这是什么"</span></div>
     <div class="term-body">
       <div class="term-line" id="tl1"><span class="dim">+ Thought · 368ms</span></div>
       <div class="term-line" id="tl2"><span class="dim">→ Skill "openvl"</span></div>
