@@ -60,6 +60,14 @@ function run() {
     } else {
         const py = findPython();
         const proc = spawn(py, [VISION_PY, ...args], { stdio: 'inherit' });
+        proc.on('error', () => {
+            console.error('');
+            console.error('  OpenVL 需要 Python 3.8+');
+            console.error('  请安装: https://www.python.org/downloads/');
+            console.error('  或通过 OPENVL_PYTHON 环境变量指定路径');
+            console.error('');
+            process.exit(1);
+        });
         proc.on('exit', c => process.exit(c));
     }
 }
