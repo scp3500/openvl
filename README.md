@@ -69,12 +69,22 @@ VISION_MODEL=模型ID
 
 ## 工具集成
 
-| 工具 | 方式 | 说明 |
-|------|------|------|
-| **OpenCode** | 插件 | 粘贴图片 → 自动存临时文件 → AI 调 openvl |
-| **Claude Code** | skills | 自动识别图片路径 → 调 openvl |
-| **Cherry Studio** | MCP | `openvl --mcp` |
-| **Pi** | skills | 自动识别图片路径 → 调 openvl |
+### OpenCode（推荐）
+
+OpenCode 粘贴图片时，插件自动拦截 → 存到 `%TEMP%` → 消息中替换为 `[Image: 路径]` → AI 自动调 `openvl` 读取。无需手动操作。
+
+安装：
+1. 复制插件：`cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/`
+2. `opencode.json` 添加 `"plugin": ["./plugin/openvl-image.mjs"]`
+3. 在 `AGENTS.md` 中添加图片处理规则（见 `integrations/README.md`）
+
+### Claude Code / Pi
+
+通过 skills 自动识别图片路径 → 调 `openvl`。
+
+### Cherry Studio
+
+通过 MCP 使用 `openvl --mcp`。
 
 详见 `integrations/README.md`。
 

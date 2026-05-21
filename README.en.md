@@ -67,12 +67,22 @@ VISION_MODEL=model-id
 
 ## Tool Integration
 
-| Tool | Method | Details |
-|------|--------|---------|
-| **OpenCode** | Plugin | Paste → temp file → openvl |
-| **Claude Code** | skills | Auto-detect image path → openvl |
-| **Cherry Studio** | MCP | `openvl --mcp` |
-| **Pi** | skills | Auto-detect image path → openvl |
+### OpenCode (Recommended)
+
+When pasting an image in OpenCode, the plugin intercepts it → saves to `%TEMP%` → replaces with `[Image: path]` → AI auto-calls `openvl`. No manual steps needed.
+
+Setup:
+1. Copy plugin: `cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/`
+2. Add to `opencode.json`: `"plugin": ["./plugin/openvl-image.mjs"]`
+3. Add image rules to `AGENTS.md` (see `integrations/README.md`)
+
+### Claude Code / Pi
+
+Skills auto-detect image paths → call `openvl`.
+
+### Cherry Studio
+
+Use `openvl --mcp` as MCP server.
 
 See `integrations/README.md`.
 
