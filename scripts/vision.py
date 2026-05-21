@@ -24,6 +24,19 @@ try:
         OPENVL_VERSION = json.load(f).get("version", "0.0.0")
 except: pass
 
+# 异步检查更新
+import threading
+def _check_update():
+    try:
+        r = requests.get("https://registry.npmjs.org/@scp3500/openvl/latest", timeout=2)
+        latest = r.json().get("version", "")
+        if latest and latest != OPENVL_VERSION:
+            print(f"\n  OpenVL {latest} 可用 (当前 {OPENVL_VERSION})", file=sys.stderr)
+            print(f"  更新: npm update -g @scp3500/openvl\n", file=sys.stderr)
+    except:
+        pass
+threading.Thread(target=_check_update, daemon=True).start()
+
 # 备用配置：从 npm 包运行时，查找用户 skills 目录配置
 HOME_DIR = Path(os.environ.get("USERPROFILE", "")) / ".pi" / "agent" / "skills" / "openvl"
 HOME_DIR2 = Path(os.environ.get("USERPROFILE", "")) / ".agents" / "skills" / "openvl"
