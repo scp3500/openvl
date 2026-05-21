@@ -16,13 +16,13 @@ const plugin = async () => {
         const parts = msg.parts;
         if (!parts) continue;
         let idx = 0;
+        const ts = Date.now();
         for (let i = 0; i < parts.length; i++) {
           const p = parts[i];
           if (p.type !== "file" || !p.mime?.startsWith("image/")) continue;
-          idx++;
           const src = p.url || p.source?.path || "";
           if (!src) continue;
-          const ts = Date.now();
+          idx++;
           const tmp = path.join(TMP, `openvl_${ts}_${idx}.png`);
           try {
             if (src.startsWith("data:")) {
