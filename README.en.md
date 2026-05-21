@@ -11,14 +11,18 @@ User sends image → OpenVL calls multimodal API → returns text description �
 ## Quick Start
 
 ```bash
+# 1. Install
 npm install -g @scp3500/openvl
+
+# 2. Configure API
 openvl -key sk-your-key
 openvl -api https://your-proxy/v1/chat/completions
-openvl image.png               # View image
-openvl image.png "what is this" # Image + question
+
+# 3. Screenshot to clipboard, then read
+openvl -c "what's in this image"
 ```
 
-AI IDE users also clone skills:
+AI IDE (Pi / Claude Code) users also copy skills:
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl

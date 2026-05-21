@@ -11,14 +11,18 @@
 ## 快速开始
 
 ```bash
+# 1. 安装
 npm install -g @scp3500/openvl
+
+# 2. 配置 API
 openvl -key sk-你的密钥
 openvl -api https://你的中转站/v1/chat/completions
-openvl 图片.png               # 看图
-openvl 图片.png "这是什么"    # 带问题看图
+
+# 3. 截图到剪贴板，直接读
+openvl -c "这张图里有什么"
 ```
 
-AI IDE 用户额外克隆 skills：
+AI IDE（Pi / Claude Code）用户额外复制 skills：
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
