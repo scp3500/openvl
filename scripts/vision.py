@@ -469,7 +469,6 @@ if __name__ == "__main__":
     max_size = 1024
     clip = False
     stdin_mode = False
-    query_parts = []
     base64_mode = False
     i = 1
     while i < len(sys.argv):
@@ -497,27 +496,25 @@ if __name__ == "__main__":
     if stdin_mode:
         images = [sys.stdin.read().strip()]
     
-    # 最后一个参数如果不是文件/URL 且 --base64 没启用，当作 query
+    # 从 images 中分离 query：最后一个参数如果不是文件/URL/data URI 当作问题
     query = None
     if images and not base64_mode and not clip:
         last = images[-1]
-        if not os.path.isfile(last) and not last.startswith("data:") and not last.startswith("http"):
-            query = last
-            images = images[:-1]
-    if query_parts:
-        query = " ".join(query_parts)
-
-    if sys.argv[1] == "--mcp":
+        if not os.path.isfile(last) and not last.startswith(("data:", "http://", "https://")):
+            query = images.pop()
+    
+    if "--mcp" in sys.argv:
+        mcp_idx = sys.argv.index("--mcp")
+        mode = sys.argv[mcp_idx + 1] if mcp_idx + 1 < len(sys.argv) and sys.argv[mcp_idx + 1] in ("http", "stdio") else "stdio"
+        os.environ["OPENVL_MCP_MODE"] = mode
         import mcp_server
-        if len(sys.argv) > 2:
-            os.environ["OPENVL_MCP_MODE"] = sys.argv[2]
         mcp_server.main()
         sys.exit(0)
 
     if clip:
         describe_image(from_clipboard=True, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
     elif images:
-        if base64_mode and images:
+        if base64_mode:
             uri = f"data:image/jpeg;base64,{images[-1]}"
             describe_image(image_source=uri, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
         else:
