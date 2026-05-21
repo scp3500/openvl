@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -10,10 +10,39 @@ const args = process.argv.slice(2);
 
 function findPython() {
     if (process.env.OPENVL_PYTHON) return process.env.OPENVL_PYTHON;
-    for (const name of ['python3', 'python']) {
-        const r = spawn.sync(name, ['--version'], { encoding: 'utf8', timeout: 3000 });
-        if (r.status === 0) return name;
+    
+    // 快速检测 PATH 中的 Python
+    const tryRun = (cmd) => {
+        try {
+            const r = spawnSync(cmd, ['--version'], { encoding: 'utf8', timeout: 2000 });
+            return r.status === 0 ? cmd : null;
+        } catch (e) { return null; }
+    };
+    
+    let found = tryRun('python3') || tryRun('python');
+    if (found) return found;
+    
+    // Windows 上扫描常见安装路径
+    if (process.platform === 'win32') {
+        const home = process.env.USERPROFILE || 'C:\\Users\\default';
+        const candidates = [
+            path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Python'),
+            path.join(home, 'AppData', 'Local', 'Programs', 'Python'),
+            path.join(home, '.local', 'bin'),
+        ];
+        for (const dir of candidates) {
+            try {
+                if (fs.existsSync(dir)) {
+                    const items = fs.readdirSync(dir);
+                    for (const item of items.sort().reverse()) {
+                        const py = path.join(dir, item, 'python.exe');
+                        if (fs.existsSync(py)) return py;
+                    }
+                }
+            } catch (e) {}
+        }
     }
+    
     return 'python';
 }
 
