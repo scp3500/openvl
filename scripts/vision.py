@@ -19,6 +19,7 @@ PROMPT_FILE = SKILL_DIR / "prompts" / "describe.md"
 
 # 备用配置：从 npm 包运行时，查找用户 skills 目录配置
 HOME_DIR = Path(os.environ.get("USERPROFILE", "")) / ".pi" / "agent" / "skills" / "openvl"
+HOME_DIR2 = Path(os.environ.get("USERPROFILE", "")) / ".agents" / "skills" / "openvl"
 
 if sys.platform == "win32":
     try:
@@ -85,6 +86,8 @@ def load_config():
     config_files = [ENV_FILE]
     if HOME_DIR and HOME_DIR != SKILL_DIR:
         config_files.append(HOME_DIR / "config.env")
+    if HOME_DIR2 and HOME_DIR2 != SKILL_DIR and HOME_DIR2 != HOME_DIR:
+        config_files.append(HOME_DIR2 / "config.env")
     
     for cfg_file in config_files:
         if not cfg_file.exists():
@@ -291,10 +294,12 @@ def call_chat(api_url, api_key, payload):
             if line.startswith("data: ") and line != "data: [DONE]":
                 try:
                     chunk = json.loads(line[6:])
-                    delta = chunk.get("choices", [{}])[0].get("delta", {})
-                    content = delta.get("content", "")
-                    if content:
-                        print(content, end="", flush=True)
+                    choices = chunk.get("choices")
+                    if choices and len(choices) > 0:
+                        delta = choices[0].get("delta", {})
+                        content = delta.get("content", "")
+                        if content:
+                            print(content, end="", flush=True)
                 except json.JSONDecodeError:
                     pass
     print()
