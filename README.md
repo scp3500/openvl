@@ -57,6 +57,15 @@ VISION_API_BASE=https://你的中转站/v1
 VISION_MODEL=模型ID
 ```
 
+## 项目文件
+
+| 文件 | 作用 |
+|------|------|
+| `prompts/describe.md` | 图片描述提示词模板，控制返回格式和语言风格 |
+| `SKILL.md` | AI 技能定义文件（Pi / Claude Code 读取），告诉 AI 何时及如何调用 `openvl` 命令 |
+| `scripts/vision.py` | 核心脚本：读图 → 调 API → 输出描述 |
+| `scripts/mcp_server.js` | MCP 服务器（Cherry Studio 连接用） |
+
 ## 许可证
 
 MIT
