@@ -3,264 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenVL - Give vision to your AI</title>
+<title>OpenVL</title>
 <style>
-/* Reset & Base */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0a0a0f;--bg2:#12121a;--surface:#1a1a26;--border:#2a2a3a;--text:#e4e4ed;--muted:#8888a0;--accent:#6366f1;--accent2:#818cf8;--green:#34d399;--yellow:#fbbf24;--code:#1e1e2e;--radius:12px;--shadow:0 4px 24px rgba(0,0,0,.4)}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:ui-monospace,'SF Mono','Cascadia Code',monospace;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
-a{color:var(--accent2);text-decoration:none}
-a:hover{text-decoration:underline}
-
-/* Layout */
-.hero{max-width:960px;margin:0 auto;padding:80px 24px 40px;text-align:center}
-.section{max-width:960px;margin:0 auto;padding:64px 24px}
-.section-title{font-size:1.1em;color:var(--muted);margin-bottom:32px;text-align:center;letter-spacing:.5px;text-transform:uppercase}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1d1d1f;font-size:15px;line-height:1.6}
 
 /* Hero */
-.hero h1{font-size:3.2em;font-weight:700;letter-spacing:-1px;margin-bottom:12px;background:linear-gradient(135deg,#e4e4ed,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero p{font-size:1.1em;color:var(--muted);max-width:520px;margin:0 auto 32px}
-.hero .cmd{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);padding:10px 20px;border-radius:var(--radius);font-size:.9em;margin:4px}
-.hero .cmd .prompt{color:var(--green)}
-.hero .cmd .arg{color:var(--accent2)}
-.hero .cmd .comment{color:var(--muted);font-size:.85em}
+.hero{max-width:800px;margin:0 auto;padding:48px 24px 32px;text-align:center}
+.hero h1{font-size:2.6em;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
+.hero p{color:#6e6e73;margin-bottom:20px}
 
-/* Terminal */
-.terminal{margin:40px auto 0;max-width:680px;background:var(--code);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);text-align:left}
-.terminal-bar{background:#1a1a26;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
-.terminal-dot{width:10px;height:10px;border-radius:50%}
-.terminal-dot:nth-child(1){background:#ff5f56}
-.terminal-dot:nth-child(2){background:#ffbd2e}
-.terminal-dot:nth-child(3){background:#27c93f}
-.terminal-body{padding:16px 20px;overflow:hidden}
-.terminal-line{white-space:pre-wrap;word-break:break-all;min-height:1.4em}
-.terminal-line .prompt{color:var(--green)}
-.terminal-line .cmd{color:var(--accent2)}
-.terminal-line .out{color:var(--text)}
-.terminal-line .dim{color:var(--muted)}
-.typed-cursor{animation:blink 1s step-end infinite;color:var(--green)}
+/* Term demo */
+.demo-term{max-width:680px;margin:0 auto;background:#f5f5f7;border:1px solid #e5e5ea;border-radius:10px;overflow:hidden;text-align:left}
+.demo-term .bar{display:flex;align-items:center;gap:6px;padding:8px 14px;background:#e8e8ed;font-size:.75em;color:#6e6e73}
+.demo-term .bar .dot{width:8px;height:8px;border-radius:50%}
+.demo-term .bar .dot:nth-child(1){background:#fe5f57}
+.demo-term .bar .dot:nth-child(2){background:#febc2e}
+.demo-term .bar .dot:nth-child(3){background:#2bc840}
+.demo-term .body{padding:12px 16px;font-family:ui-monospace,'SF Mono',monospace;font-size:.82em;line-height:1.7}
+.demo-term .body .tag{display:inline-block;background:#e8e8ed;padding:1px 6px;border-radius:4px;font-size:.85em}
+.demo-term .body .prompt{color:#30a46c}
+.demo-term .body .cmd{color:#0066cc}
+.demo-term .body .dim{color:#8e8e93}
+.demo-term .body .res{color:#1d1d1f;white-space:pre-wrap}
+.demo-term .body .thought{color:#8e8e93;font-style:italic}
+
 @keyframes blink{50%{opacity:0}}
+.cursor::after{content:"▊";animation:blink 1s step-end infinite;color:#30a46c}
+
+/* Sections */
+.section{max-width:800px;margin:0 auto;padding:40px 24px}
+.section-title{font-size:.78em;color:#8e8e93;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px}
 
 /* Flow */
-.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:32px 0}
-.flow-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;position:relative}
-.flow-card .icon{font-size:2em;margin-bottom:8px}
-.flow-card .label{font-size:.85em;color:var(--muted)}
-.flow-card .arrow{position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1.2em}
-.flow-card:last-child .arrow{display:none}
-@media(max-width:600px){.flow-card .arrow{display:none}}
+.flow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.flow-item{background:#f5f5f7;border:1px solid #e5e5ea;border-radius:8px;padding:16px 20px;text-align:center;flex:1;min-width:100px}
+.flow-item .icon{font-size:1.5em;margin-bottom:4px}
+.flow-item .label{font-size:.82em;color:#6e6e73}
 
-/* Demo Grid */
-.demo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-.demo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .2s}
-.demo-card:hover{border-color:var(--accent)}
-.demo-preview{padding:16px;font-size:.82em;line-height:1.5;min-height:100px;border-bottom:1px solid var(--border)}
-.demo-preview .stat{display:flex;justify-content:space-between;padding:2px 0}
-.demo-preview .bar{height:6px;border-radius:3px;display:inline-block}
-.demo-chat{padding:12px 16px;font-size:.82em}
-.demo-msg{display:flex;gap:8px;margin:6px 0}
-.demo-msg .av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7em;flex-shrink:0}
-.demo-msg .av.u{background:var(--accent);color:#fff}
-.demo-msg .av.a{background:var(--muted);color:#fff}
-.demo-msg .b{background:var(--code);padding:6px 10px;border-radius:6px;border:1px solid var(--border)}
-.demo-msg.u .b{background:var(--accent);color:#fff;border-color:var(--accent)}
-.typing-dots{display:flex;gap:4px;padding:8px 0 8px 30px}
-.typing-dots span{width:5px;height:5px;background:var(--muted);border-radius:50%;animation:bounce 1.4s infinite}
-.typing-dots span:nth-child(2){animation-delay:.2s}
-.typing-dots span:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+/* Cmd grid */
+.cmd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}
+.cmd-item{background:#f5f5f7;border:1px solid #e5e5ea;border-radius:6px;padding:8px 12px;font-size:.82em}
+.cmd-item code{color:#0066cc;font-family:ui-monospace,monospace;font-size:.95em}
+.cmd-item .desc{color:#8e8e93;font-size:.9em}
 
-/* Commands grid */
-.cmd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
-.cmd-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:.82em}
-.cmd-item code{color:var(--accent2)}
-.cmd-item .desc{color:var(--muted);font-size:.9em;margin-top:2px}
-
-/* Integrations table */
-table{width:100%;border-collapse:collapse;font-size:.88em;background:var(--surface);border-radius:var(--radius);overflow:hidden}
-td,th{padding:10px 16px;border-bottom:1px solid var(--border);text-align:left}
-th{background:var(--code);color:var(--muted);font-weight:500;font-size:.8em;text-transform:uppercase;letter-spacing:.5px}
-.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.8em;font-weight:500}
-.tag.green{background:rgba(52,211,153,.15);color:var(--green)}
-.tag.yellow{background:rgba(251,191,36,.15);color:var(--yellow)}
-.tag.gray{background:rgba(136,136,160,.15);color:var(--muted)}
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:.82em;background:#fff;border:1px solid #e5e5ea;border-radius:8px;overflow:hidden}
+td,th{padding:8px 12px;text-align:left;border-bottom:1px solid #e5e5ea}
+th{background:#f5f5f7;color:#6e6e73;font-weight:500;font-size:.78em;text-transform:uppercase}
+.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.85em;font-weight:500}
+.tag.green{background:#e8f8ee;color:#1a7d36}
+.tag.yellow{background:#fef7e8;color:#9a6b00}
+.tag.gray{background:#f5f5f7;color:#6e6e73}
 
 /* Install */
-.install-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
-.install-box pre{background:var(--code);padding:16px;border-radius:8px;overflow-x:auto;font-size:.85em;margin:12px 0;line-height:1.7}
-.install-box pre .c{color:var(--muted)}
-.btns{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 0}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-weight:500;font-size:.9em;transition:all .2s;cursor:pointer}
-.btn.primary{background:var(--accent);color:#fff}
-.btn.primary:hover{background:var(--accent2);text-decoration:none}
-.btn.secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}
-.btn.secondary:hover{border-color:var(--accent);text-decoration:none}
+.install-box{background:#f5f5f7;border:1px solid #e5e5ea;border-radius:8px;padding:20px}
+.install-box pre{background:#fff;padding:12px;border-radius:6px;font-size:.82em;margin:8px 0;font-family:ui-monospace,monospace;border:1px solid #e5e5ea}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0}
+.btn{display:inline-flex;padding:8px 18px;border-radius:6px;font-weight:500;font-size:.88em}
+.btn.primary{background:#0066cc;color:#fff}
+.btn.secondary{background:#fff;color:#1d1d1f;border:1px solid #d2d2d7}
+.btn.secondary:hover{text-decoration:none}
 
-footer{padding:40px 24px;text-align:center;color:var(--muted);font-size:.82em;border-top:1px solid var(--border)}
+footer{padding:32px 24px;text-align:center;color:#8e8e93;font-size:.8em;border-top:1px solid #e5e5ea}
 </style>
 </head>
 <body>
 
-<section class="hero">
+<div class="hero">
   <h1>OpenVL</h1>
-  <p>让没有视觉能力的 AI 模型也能看懂图片。截图、提问、得到答案。</p>
-  <div class="cmd"><span class="prompt">$</span> npm install -g <span class="arg">@scp3500/openvl</span> <span class="comment"># 安装</span></div>
-  <div class="cmd" style="margin-top:8px"><span class="prompt">$</span> openvl -c <span class="arg">"这张图里有什么"</span> <span class="comment"># 截图提问</span></div>
+  <p>让没有视觉能力的 AI 模型也能看懂图片</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:20px">
+    <span style="background:#f5f5f7;border:1px solid #e5e5ea;border-radius:6px;padding:6px 12px;font-family:monospace;font-size:.82em"><span style="color:#30a46c">$</span> npm install -g <span style="color:#0066cc">@scp3500/openvl</span></span>
+  </div>
 
-  <div class="terminal" id="hero-terminal">
-    <div class="terminal-bar"><span class="terminal-dot"></span><span class="terminal-dot"></span><span class="terminal-dot"></span></div>
-    <div class="terminal-body" id="term-body">
-      <div class="terminal-line"><span class="prompt">$</span> <span class="cmd">openvl -c "这张截图是什么"</span></div>
-      <div class="terminal-line" id="line1"></div>
-      <div class="terminal-line" id="line2"></div>
-      <div class="terminal-line" id="line3"></div>
+  <div class="demo-term" id="demo">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span> openvl -c "这张图是什么"</div>
+    <div class="body">
+      <div id="l1" style="display:none"><span class="dim">+ Thought · 368ms</span></div>
+      <div id="l2" style="display:none">→ <span class="tag">Skill "openvl"</span></div>
+      <div id="l3" style="display:none"><span class="dim">+ Thought · 324ms</span></div>
+      <div id="l4" style="display:none"><span class="prompt">$</span> <span class="cmd">openvl "C:\Users\33795\AppData\Local\Temp\openvl_001.png"</span></div>
+      <div id="l5" style="display:none"></div>
+      <div id="cursor-line" style="display:none"><span class="cursor"></span></div>
     </div>
   </div>
-</section>
+</div>
 
-<section class="section">
+<div class="section">
   <h2 class="section-title">工作流程</h2>
   <div class="flow">
-    <div class="flow-card"><div class="icon">📸</div><div class="label">截图或传图片</div><span class="arrow">→</span></div>
-    <div class="flow-card"><div class="icon">⚡</div><div class="label">OpenVL 调视觉 API</div><span class="arrow">→</span></div>
-    <div class="flow-card"><div class="icon">📝</div><div class="label">返回文字描述</div><span class="arrow">→</span></div>
-    <div class="flow-card"><div class="icon">🤖</div><div class="label">AI 根据描述回答</div></div>
+    <div class="flow-item"><div class="icon">📸</div><div class="label">截图</div></div>
+    <div class="flow-item"><div class="icon">⚡</div><div class="label">openvl 分析</div></div>
+    <div class="flow-item"><div class="icon">📝</div><div class="label">返回描述</div></div>
+    <div class="flow-item"><div class="icon">🤖</div><div class="label">AI 回答</div></div>
   </div>
-</section>
+</div>
 
-<section class="section">
-  <h2 class="section-title">效果演示</h2>
-  <div class="demo-grid">
-    <div class="demo-card">
-      <div class="demo-preview">
-        <div style="margin-bottom:6px;font-weight:600">📊 项目语言统计</div>
-        <div class="stat"><span>Python</span><span>51.8%</span></div><div style="background:#1e1e2e;border-radius:3px;height:6px;margin-bottom:8px"><div style="width:51.8%;background:#3572a5;height:6px;border-radius:3px"></div></div>
-        <div class="stat"><span>JavaScript</span><span>22.5%</span></div><div style="background:#1e1e2e;border-radius:3px;height:6px;margin-bottom:8px"><div style="width:22.5%;background:#f1e05a;height:6px;border-radius:3px"></div></div>
-        <div class="stat"><span>TypeScript</span><span>12.3%</span></div><div style="background:#1e1e2e;border-radius:3px;height:6px;margin-bottom:4px"><div style="width:12.3%;background:#3178c6;height:6px;border-radius:3px"></div></div>
-      </div>
-      <div class="demo-chat" id="dc1">
-        <div class="demo-msg u"><div class="av u">U</div><div class="b">这个项目用什么语言写的？</div></div>
-        <div class="typing-dots" id="dt1"><span></span><span></span><span></span></div>
-        <div class="demo-msg a" id="dr1" style="display:none"><div class="av a">AI</div><div class="b">Python 占 51.8%，JavaScript 22.5%，TypeScript 12.3%。<span style="opacity:.6"> 来自 openvl 分析</span></div></div>
-      </div>
-    </div>
-    <div class="demo-card">
-      <div class="demo-preview">
-        <div style="margin-bottom:6px;font-weight:600">🎨 活动海报</div>
-        <div style="font-size:.9em;line-height:1.6">
-          <div style="font-size:1.1em;font-weight:600;color:var(--yellow)">因梦而聚</div>
-          <div style="opacity:.7">6月20日 长春蔚蓝档案Only</div>
-          <div style="opacity:.5;font-size:.85em">官方交流群: 554284714</div>
-        </div>
-      </div>
-      <div class="demo-chat" id="dc2">
-        <div class="demo-msg u"><div class="av u">U</div><div class="b">这是什么活动？</div></div>
-        <div class="typing-dots" id="dt2"><span></span><span></span><span></span></div>
-        <div class="demo-msg a" id="dr2" style="display:none"><div class="av a">AI</div><div class="b">6月20日在长春的蔚蓝档案 Only 同人展，主题"因梦而聚"。</div></div>
-      </div>
-    </div>
-    <div class="demo-card">
-      <div class="demo-preview">
-        <div style="margin-bottom:6px;font-weight:600">🖥️ 模型选择界面</div>
-        <div style="opacity:.6;font-size:.85em">
-          <div>GPT 5.3 Codex Spark · OpenAI</div>
-          <div style="font-weight:500;color:var(--text)">GPT 5.4 · OpenAI</div>
-          <div>GPT 5.4 Mini · OpenAI</div>
-          <div>GPT 5.4 Nano · OpenAI</div>
-        </div>
-      </div>
-      <div class="demo-chat" id="dc3">
-        <div class="demo-msg u"><div class="av u">U</div><div class="b">有哪些模型可用？</div></div>
-        <div class="typing-dots" id="dt3"><span></span><span></span><span></span></div>
-        <div class="demo-msg a" id="dr3" style="display:none"><div class="av a">AI</div><div class="b">列表中包含 GPT 5.3 Codex Spark、GPT 5.4、GPT 5.4 Mini、GPT 5.4 Nano、GPT 5.4 Pro，全部来自 OpenAI。</div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <h2 class="section-title">命令参考</h2>
+<div class="section">
+  <h2 class="section-title">命令</h2>
   <div class="cmd-grid">
-    <div class="cmd-item"><code>openvl &lt;路径&gt;</code><div class="desc">直接看文件</div></div>
-    <div class="cmd-item"><code>openvl -c</code><div class="desc">读剪贴板截图</div></div>
-    <div class="cmd-item"><code>openvl -c "提问"</code><div class="desc">截图 + 提问</div></div>
-    <div class="cmd-item"><code>openvl --stdin</code><div class="desc">管道传 data URI</div></div>
-    <div class="cmd-item"><code>openvl --base64</code><div class="desc">传 base64 数据</div></div>
-    <div class="cmd-item"><code>openvl a.png b.png</code><div class="desc">多张图一起传</div></div>
-    <div class="cmd-item"><code>openvl -s 512</code><div class="desc">图片尺寸</div></div>
-    <div class="cmd-item"><code>openvl -T high</code><div class="desc">思考深度</div></div>
-    <div class="cmd-item"><code>openvl -t 0.3</code><div class="desc">温度控制</div></div>
-    <div class="cmd-item"><code>openvl doctor</code><div class="desc">环境诊断</div></div>
-    <div class="cmd-item"><code>openvl setup</code><div class="desc">交互式配置</div></div>
-    <div class="cmd-item"><code>openvl -cfg</code><div class="desc">查看配置</div></div>
+    <div class="cmd-item"><code>openvl &lt;路径&gt;</code><div class="desc">看图</div></div>
+    <div class="cmd-item"><code>openvl -c</code><div class="desc">剪贴板截图</div></div>
+    <div class="cmd-item"><code>openvl -c "提问"</code><div class="desc">截图+提问</div></div>
+    <div class="cmd-item"><code>openvl --stdin</code><div class="desc">管道传图</div></div>
+    <div class="cmd-item"><code>openvl a.png b.png</code><div class="desc">多图一次</div></div>
+    <div class="cmd-item"><code>openvl doctor</code><div class="desc">诊断</div></div>
+    <div class="cmd-item"><code>openvl setup</code><div class="desc">配置</div></div>
+    <div class="cmd-item"><code>openvl -s 512</code><div class="desc">尺寸</div></div>
   </div>
-</section>
+</div>
 
-<section class="section">
-  <h2 class="section-title">集成方式</h2>
+<div class="section">
+  <h2 class="section-title">集成</h2>
   <table>
-    <tr><th>工具</th><th>方式</th><th>体验</th><th>说明</th></tr>
-    <tr><td>OpenCode</td><td>插件 + AGENTS.md</td><td><span class="tag green">全自动</span></td><td>粘贴即分析</td></tr>
-    <tr><td>Claude Code</td><td>skills</td><td><span class="tag yellow">半自动</span></td><td>自动识别路径</td></tr>
-    <tr><td>Pi</td><td>skills</td><td><span class="tag yellow">半自动</span></td><td>同上</td></tr>
-    <tr><td>Cherry Studio</td><td>MCP</td><td><span class="tag gray">手动</span></td><td>调 describe_image</td></tr>
+    <tr><th>工具</th><th>方式</th><th>体验</th></tr>
+    <tr><td>OpenCode</td><td>插件 + AGENTS.md</td><td><span class="tag green">全自动</span></td></tr>
+    <tr><td>Claude Code</td><td>skills</td><td><span class="tag yellow">半自动</span></td></tr>
+    <tr><td>Pi</td><td>skills</td><td><span class="tag yellow">半自动</span></td></tr>
+    <tr><td>Cherry Studio</td><td>MCP</td><td><span class="tag gray">手动</span></td></tr>
   </table>
-</section>
+</div>
 
-<section class="section">
+<div class="section">
   <h2 class="section-title">安装</h2>
   <div class="install-box">
-    <pre><span style="opacity:.5"># 一步安装</span>
-npm install -g @scp3500/openvl
-
-<span style="opacity:.5"># 配置 API</span>
+    <pre>npm install -g @scp3500/openvl
 openvl setup
-
-<span style="opacity:.5"># 截图提问</span>
-openvl -c "这张图里有什么"</pre>
+openvl -c "图中是什么"</pre>
     <div class="btns">
       <a class="btn primary" href="https://github.com/scp3500/openvl">GitHub →</a>
       <a class="btn secondary" href="https://www.npmjs.com/package/@scp3500/openvl">npm</a>
     </div>
   </div>
-</section>
+</div>
 
-<footer>
-  MIT License · <a href="https://github.com/scp3500/openvl">scp3500/openvl</a>
-</footer>
+<footer>MIT · <a href="https://github.com/scp3500/openvl">scp3500/openvl</a></footer>
 
 <script>
-// Terminal typing
-const termLines = [
-  { id: 'line1', text: '正在分析图片...', delay: 600 },
-  { id: 'line2', text: '这是一张截图。图中显示的是一个模型选择列表，包含 GPT 5.3 Codex Spark、GPT 5.4、GPT 5.4 Mini 等模型，均来自 OpenAI。', delay: 1800, type: true },
+const text = `这是一张网页截图，内容是硅基流动（SiliconFlow）后台的"推荐官计划"页面。
+
+左侧导航栏包含：实名认证、API 密钥、余额充值、费用明细、发票开具、推荐官计划、认证享专礼、我的邀请记录。
+
+主内容区顶部标题"推荐官计划"，右侧提示"每邀一人注册认证即得 ¥16 全平台通用代金券"。
+
+邀请码：eQMNF05N
+邀请链接：cloud.siliconflow.cn/i/eQmNF...
+累计已完成 1 次有效推荐，共获得 16 元代金券。`;
+
+const lines = [
+  { id: 'l1', delay: 300 },
+  { id: 'l2', delay: 700 },
+  { id: 'l3', delay: 1100 },
+  { id: 'l4', delay: 1500 },
 ];
-let t = 800;
-termLines.forEach(({id, text, delay, type}) => {
+
+let t = 500;
+lines.forEach(l => {
   setTimeout(() => {
-    const el = document.getElementById(id);
-    el.style.opacity = '1';
-    if (type) {
-      let i = 0;
-      const iv = setInterval(() => { if (i < text.length) { el.textContent += text[i]; i++; } else clearInterval(iv); }, 10);
-    } else {
-      el.textContent = text;
-    }
+    document.getElementById(l.id).style.display = 'block';
   }, t);
-  t += delay;
+  t += l.delay;
 });
 
-// Demo animations
-function animateDemo(dotsId, respId, delay) {
-  setTimeout(() => {
-    document.getElementById(dotsId).style.display = 'none';
-    document.getElementById(respId).style.display = 'flex';
-  }, delay);
-}
-animateDemo('dt1', 'dr1', 1200);
-animateDemo('dt2', 'dr2', 2200);
-animateDemo('dt3', 'dr3', 3200);
+setTimeout(() => {
+  const l5 = document.getElementById('l5');
+  l5.style.display = 'block';
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i < text.length) {
+      l5.textContent += text[i];
+      i++;
+    } else {
+      clearInterval(iv);
+      setTimeout(() => { document.getElementById('cursor-line').style.display = 'none'; }, 500);
+    }
+  }, 8);
+  document.getElementById('cursor-line').style.display = 'block';
+}, 3500);
 </script>
 </body>
 </html>
