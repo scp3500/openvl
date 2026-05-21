@@ -67,43 +67,40 @@ VISION_API_BASE=https://你的中转站/v1/chat/completions
 VISION_MODEL=模型ID
 ```
 
-## 工具集成
+## 各工具怎么用
 
-OpenVL 支持多种接入方式，按需求选择：
+| 工具 | 贴图方式 | 操作步骤 |
+|------|----------|----------|
+| **OpenCode** | 直接粘贴到聊天框 | 装插件 → 配 AGENTS.md → 贴图自动读 |
+| **Claude Code / Pi** | 传文件路径或截图 | 装 skills → AI 自动识别图片 |
+| **Cherry Studio** | 发图片给 AI | 配 MCP → 让 AI 调工具 |
 
-| 工具 | 方式 | 体验 | 适用场景 |
-|------|------|------|----------|
-| **OpenCode** | 插件 + AGENTS.md | 全自动 | 粘贴图片 → 自动分析，无需任何操作 |
-| **Claude Code** | skills | 半自动 | 图片路径出现时 AI 自动调 openvl |
-| **Pi** | skills | 半自动 | 同上 |
-| **Cherry Studio** | MCP | 手动 | 告诉 AI "用 describe_image 工具" |
+### OpenCode（推荐）
 
-### OpenCode（推荐，全自动体验最佳）
+装好插件后，粘贴图片到聊天框，AI 自动看图回答。
 
-粘贴图片到聊天框 → 插件自动拦截 → 存到临时文件 → 消息中替换为 `[Image: 路径]` 标记 → AI 自动调 `openvl` 读取。用户只管贴图，剩下的全自动。
-
-配置：
 ```bash
-# 1. 复制插件
+# 1. 装插件
+mkdir -p ~/.config/opencode/plugin
 cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
 
-# 2. opencode.json 添加插件
+# 2. opencode.json 加上这行
 # "plugin": ["./plugin/openvl-image.mjs"]
 
-# 3. AGENTS.md 加上图片规则（见 integrations/README.md）
+# 3. AGENTS.md 加规则（参考 integrations/README.md）
 ```
 
-### Claude Code / Pi（skills 方式）
+### Claude Code / Pi
 
-AI 在上下文中看到图片路径或用户提及图片时，按 skills 规则自动调 `openvl`。无需插件，配置简单。
+只要把仓库克隆到 skills 目录，AI 遇到图片就会自动调 openvl。
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
 ```
 
-### Cherry Studio（MCP 方式）
+### Cherry Studio
 
-通过 MCP 协议连接，用户手动让 AI 调用 `describe_image` 或 `describe_clipboard` 工具。适合已有 MCP 工作流的用户。
+配成 MCP 服务器，让 AI 调 `describe_image` 工具：
 
 | 字段 | 值 |
 |------|-----|

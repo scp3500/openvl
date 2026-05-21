@@ -65,43 +65,40 @@ VISION_API_BASE=https://your-proxy/v1/chat/completions
 VISION_MODEL=model-id
 ```
 
-## Tool Integration
+## How to Use with Each Tool
 
-OpenVL supports multiple integration methods. Choose based on your workflow:
+| Tool | Paste Method | Setup |
+|------|-------------|-------|
+| **OpenCode** | Paste directly into chat | Install plugin + AGENTS.md → auto-read |
+| **Claude Code / Pi** | File path or screenshot | Install skills → AI auto-detects images |
+| **Cherry Studio** | Send image to AI | Configure MCP → ask AI to use tool |
 
-| Tool | Method | Experience | Best for |
-|------|--------|------------|----------|
-| **OpenCode** | Plugin + AGENTS.md | Fully automatic | Paste → auto-analyze, zero effort |
-| **Claude Code** | skills | Semi-automatic | AI auto-calls openvl when image path appears |
-| **Pi** | skills | Semi-automatic | Same as above |
-| **Cherry Studio** | MCP | Manual | Tell AI "use describe_image tool" |
+### OpenCode (Recommended)
 
-### OpenCode (Recommended, best automatic experience)
+After setup, just paste an image into the chat. The AI reads it automatically.
 
-Paste an image → plugin intercepts → saves to temp file → replaces with `[Image: path]` marker → AI auto-calls `openvl`. Just paste and go.
-
-Setup:
 ```bash
-# 1. Copy plugin
+# 1. Install plugin
+mkdir -p ~/.config/opencode/plugin
 cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
 
-# 2. Add plugin to opencode.json
+# 2. Add to opencode.json
 # "plugin": ["./plugin/openvl-image.mjs"]
 
-# 3. Add image rules to AGENTS.md (see integrations/README.md)
+# 3. Add rules to AGENTS.md (see integrations/README.md)
 ```
 
-### Claude Code / Pi (skills)
+### Claude Code / Pi
 
-AI detects image paths or user mentions images, then auto-calls `openvl` via skills rules. No plugin needed, simple setup.
+Clone the repo to the skills directory, and the AI will auto-use openvl when it sees an image.
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
 ```
 
-### Cherry Studio (MCP)
+### Cherry Studio
 
-Connect via MCP protocol. Users manually ask the AI to use `describe_image` or `describe_clipboard` tools. For users already in an MCP workflow.
+Configure as MCP server, then ask the AI to use `describe_image`:
 
 | Field | Value |
 |-------|-------|
