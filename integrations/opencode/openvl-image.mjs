@@ -3,11 +3,10 @@ import path from "path";
 
 const TMP = process.env.TEMP || "C:\Users\33795\AppData\Local\Temp";
 
-// 启动时清理旧缓存
+// 启动时清理旧缓存（保留最近 100 张）
 try {
-  for (const f of fs.readdirSync(TMP).filter(n => n.startsWith("openvl_img") && n.endsWith(".png"))) {
-    fs.rmSync(path.join(TMP, f), { force: true });
-  }
+  const files = fs.readdirSync(TMP).filter(n => n.startsWith("openvl_") && n.endsWith(".png")).sort();
+  while (files.length > 100) fs.rmSync(path.join(TMP, files.shift()), { force: true });
 } catch {}
 
 const plugin = async () => {
@@ -23,7 +22,8 @@ const plugin = async () => {
           idx++;
           const src = p.url || p.source?.path || "";
           if (!src) continue;
-          const tmp = path.join(TMP, `openvl_img${idx}.png`);
+          const ts = Date.now();
+          const tmp = path.join(TMP, `openvl_${ts}_${idx}.png`);
           try {
             if (src.startsWith("data:")) {
               fs.writeFileSync(tmp, Buffer.from(src.split(",")[1], "base64"));
