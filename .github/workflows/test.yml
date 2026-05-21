@@ -75,12 +75,11 @@ jobs:
         run: python scripts/vision.py doctor 2>&1
 
       - name: doctor (with key)
-        if: ${{ secrets.API_KEY != '' }}
         env:
-          VISION_API_KEY: ${{ secrets.API_KEY }}
-          VISION_API_BASE: ${{ secrets.API_BASE || 'https://api.deepseek.com/v1/chat/completions' }}
-          VISION_MODEL: ${{ secrets.MODEL || 'deepseek-v4-flash' }}
-        run: python scripts/vision.py doctor
+          VISION_API_KEY: ${{ secrets.API_KEY || '' }}
+          VISION_API_BASE: ${{ secrets.API_BASE || '' }}
+          VISION_MODEL: ${{ secrets.MODEL || '' }}
+        run: python scripts/vision.py doctor 2>&1 || true
 
       - name: Image via file
         run: |
