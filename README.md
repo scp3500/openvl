@@ -10,24 +10,40 @@
 
 ## 快速开始
 
+### 1. 安装
+
 ```bash
-# 1. 安装
 npm install -g @scp3500/openvl
-
-# 2. 配置 API
-openvl -key sk-你的密钥
-openvl -api https://你的中转站/v1/chat/completions
-
-# 3. 用起来
-openvl D:\截图.png              # 直接看文件
-openvl -c "这张图里有什么"       # 或截图到剪贴板提问
 ```
 
-AI IDE（Pi / Claude Code）用户额外复制 skills：
+### 2. 配置 API
+
+```bash
+openvl -key sk-你的密钥
+openvl -api https://你的中转站/v1/chat/completions
+```
+
+### 3. 看图
+
+直接看文件：
+
+```bash
+openvl D:\截图.png
+```
+
+或截图到剪贴板后提问：
+
+```bash
+openvl -c "这张图里有什么"
+```
+
+### 4. 给 AI IDE 装 skills（可选）
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 ```
+
+这样 AI（Pi / Claude Code 等）遇到图片会自动调 openvl。
 
 ## 使用方式
 

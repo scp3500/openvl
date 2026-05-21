@@ -10,24 +10,40 @@ User sends image → OpenVL calls multimodal API → returns text description �
 
 ## Quick Start
 
+### 1. Install
+
 ```bash
-# 1. Install
 npm install -g @scp3500/openvl
-
-# 2. Configure API
-openvl -key sk-your-key
-openvl -api https://your-proxy/v1/chat/completions
-
-# 3. Use it
-openvl D:\screenshot.png        # Read a file directly
-openvl -c "what's in this image" # Or screenshot to clipboard
 ```
 
-AI IDE (Pi / Claude Code) users also copy skills:
+### 2. Configure API
+
+```bash
+openvl -key sk-your-key
+openvl -api https://your-proxy/v1/chat/completions
+```
+
+### 3. View an image
+
+Read a file directly:
+
+```bash
+openvl D:\screenshot.png
+```
+
+Or screenshot to clipboard and ask:
+
+```bash
+openvl -c "what's in this image"
+```
+
+### 4. Install skills for AI IDE (optional)
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 ```
+
+This allows AI tools (Pi / Claude Code etc.) to auto-call openvl when they encounter images.
 
 ## Usage
 
