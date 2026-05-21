@@ -362,12 +362,14 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
             m = mime_map.get(Path(resized).suffix.lower(), "image/jpeg")
             return f"data:{m};base64,{b}"
         if img_path.startswith("data:") or img_path.startswith("http"):
-            # 部分图站需要 Referer 才能访问
+            # 部分图站需要代理或 Referer
+            dl_url = img_path
             headers = {}
             if "pximg.net" in img_path:
                 headers["Referer"] = "https://www.pixiv.net/"
+                dl_url = img_path.replace("i.pximg.net", "i.pixiv.cat")
             try:
-                r = requests.get(img_path, headers=headers, timeout=15)
+                r = requests.get(dl_url, headers=headers, timeout=15)
                 if r.ok:
                     ct = r.headers.get("content-type", "image/jpeg")
                     b64 = base64.b64encode(r.content).decode()
