@@ -152,16 +152,142 @@ def encode_image(image_path):
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
+def detect_api_type(url):
+    """根据 URL 自动识别 API 类型"""
+    url = url.lower()
+    if "googleapis.com" in url or "generativelanguage" in url:
+        return "gemini"
+    if "api.anthropic.com" in url:
+        return "claude"
+    if "/responses" in url:
+        return "responses"
+    return "chat"
+
+def call_gemini(api_url, api_key, payload):
+    """调用 Google Gemini API"""
+    model = payload.pop("model", "")
+    token = payload.pop("max_tokens", 1024)
+    temp = payload.pop("temperature", None)
+
+    url = api_url.rstrip("/")
+    if "generateContent" not in url:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    url += f"?key={api_key}"
+
+    content = []
+    for msg in payload.get("messages", []):
+        parts = []
+        for item in msg.get("content", []):
+            if item.get("type") == "image_url":
+                url_data = item["image_url"]["url"]
+                if url_data.startswith("data:"):
+                    _, b64 = url_data.split(",", 1)
+                    mime = url_data.split(";")[0].split(":")[1]
+                    parts.append({"inlineData": {"mimeType": mime, "data": b64}})
+            elif item.get("type") == "text":
+                parts.append({"text": item["text"]})
+        content.append({"role": "user", "parts": parts})
+
+    body = {"contents": content, "generationConfig": {"maxOutputTokens": token}}
+    if temp is not None:
+        body["generationConfig"]["temperature"] = temp
+
+    resp = requests.post(url, json=body, timeout=60)
+    if resp.status_code != 200:
+        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
+        sys.exit(1)
+    result = resp.json()
+    try:
+        print(result["candidates"][0]["content"]["parts"][0]["text"])
+    except (KeyError, IndexError):
+        print(result)
+
+def call_claude(api_url, api_key, payload):
+    """调用 Claude API"""
+    model = payload.get("model", "")
+    token = payload.get("max_tokens", 1024)
+    temp = payload.get("temperature")
+
+    content = []
+    for msg in payload.get("messages", []):
+        parts = []
+        for item in msg.get("content", []):
+            if item.get("type") == "image_url":
+                url_data = item["image_url"]["url"]
+                if url_data.startswith("data:"):
+                    _, b64 = url_data.split(",", 1)
+                    mime = url_data.split(";")[0].split(":")[1]
+                    parts.append({"type": "image", "source": {"type": "base64", "media_type": mime, "data": b64}})
+            elif item.get("type") == "text":
+                parts.append({"type": "text", "text": item["text"]})
+        content.append({"role": "user", "content": parts})
+
+    body = {"model": model, "max_tokens": token, "messages": content}
+    if temp is not None:
+        body["temperature"] = temp
+
+    headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01", "Content-Type": "application/json"}
+
+    url = api_url.rstrip("/")
+    if "/messages" not in url:
+        url = "https://api.anthropic.com/v1/messages"
+
+    resp = requests.post(url, headers=headers, json=body, timeout=60)
+    if resp.status_code != 200:
+        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
+        sys.exit(1)
+    result = resp.json()
+    try:
+        print(result["content"][0]["text"])
+    except (KeyError, IndexError):
+        print(result)
+
+def call_responses(api_url, api_key, payload):
+    """调用 OpenAI Responses API"""
+    body = payload.copy()
+    if "messages" in body:
+        msg = body["messages"][0]
+        body["input"] = msg["content"]
+        del body["messages"]
+
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    resp = requests.post(api_url, headers=headers, json=body, timeout=60)
+    if resp.status_code != 200:
+        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
+        sys.exit(1)
+    result = resp.json()
+    try:
+        print(result["output"][0]["content"][0]["text"])
+    except (KeyError, IndexError):
+        print(result)
+
+def call_chat(api_url, api_key, payload):
+    """调用 OpenAI Chat Completions API"""
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+    resp = requests.post(api_url, headers=headers, json=payload, timeout=60)
+    if resp.status_code != 200:
+        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
+        sys.exit(1)
+    result = resp.json()
+    try:
+        print(result["choices"][0]["message"]["content"])
+    except (KeyError, IndexError):
+        print(result)
+
 def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False):
     config = load_config()
     if not config["api_key"]:
         print("错误: 未配置 API Key")
         print(f"请编辑 {ENV_FILE} 文件")
         sys.exit(1)
+    if not config["api_base"]:
+        print("错误: 未配置 API 地址")
+        sys.exit(1)
 
     if from_clipboard:
         image_source = get_clipboard_image()
 
+    b64, mime = None, None
     if os.path.isfile(image_source):
         ext = Path(image_source).suffix.lower()
         if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"):
@@ -174,21 +300,29 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
         mime_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
                     ".webp": "image/webp", ".gif": "image/gif", ".bmp": "image/bmp"}
         mime = mime_map.get(Path(resized).suffix.lower(), "image/jpeg")
-        img_data = f"data:{mime};base64,{b64}"
     else:
+        # 已经是 URL 或 base64 data URI
         img_data = image_source
+        if img_data.startswith("data:"):
+            _, b64data = img_data.split(",", 1)
+            mime = img_data.split(";")[0].split(":")[1]
+            b64 = b64data
 
     prompt = load_prompt()
+    api_type = detect_api_type(config["api_base"])
+
+    # 构建通用 payload（OpenAI 格式）
+    content = []
+    if b64:
+        content.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
+    else:
+        content.append({"type": "image_url", "image_url": {"url": image_source}})
+    content.append({"type": "text", "text": prompt})
+
     payload = {
         "model": config["model"],
         "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image_url", "image_url": {"url": img_data}},
-                    {"type": "text", "text": prompt}
-                ]
-            }
+            {"role": "user", "content": content}
         ],
         "max_tokens": 1024,
     }
@@ -197,24 +331,18 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
     if thinking_effort is not None:
         payload["reasoning_effort"] = thinking_effort
 
-    headers = {
-        "Authorization": f"Bearer {config['api_key']}",
-        "Content-Type": "application/json"
-    }
+    api_url = config["api_base"].rstrip("/")
+    api_key = config["api_key"]
 
     try:
-        api_url = config["api_base"].rstrip("/")
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=60)
-        if resp.status_code != 200:
-            print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
-            sys.exit(1)
-        result = resp.json()
-        if "choices" in result:
-            print(result["choices"][0]["message"]["content"])
-        elif "output" in result:
-            print(result["output"][0]["content"][0]["text"])
+        if api_type == "gemini":
+            call_gemini(api_url, api_key, payload)
+        elif api_type == "claude":
+            call_claude(api_url, api_key, payload)
+        elif api_type == "responses":
+            call_responses(api_url, api_key, payload)
         else:
-            print(result)
+            call_chat(api_url, api_key, payload)
     except requests.exceptions.Timeout:
         print("请求超时，请重试")
         sys.exit(1)
