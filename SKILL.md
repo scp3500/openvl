@@ -22,31 +22,11 @@ npm install -g @scp3500/openvl
 
 ## 使用方式
 
-### CLI（Pi / Claude Code / OpenCode 等）
-
-**可用命令：**
-
-| 命令 | 说明 |
-|------|------|
-| `openvl <路径/URL>` | 从文件或 URL 看图 |
-| `openvl --clip` | 从剪贴板读截图 |
-
-### Cherry Studio（通过 MCP）
-
-**可用工具：**
-
-| 工具 | 说明 |
-|------|------|
-| `describe_image` | 传入图片路径/URL/base64 看图 |
-| `describe_clipboard` | 从剪贴板读截图 |
-
-| 字段 | 值 |
-|------|-----|
-| 命令 | `openvl` |
-| 参数 | `--mcp` |
-| 超时 | `90` |
-
-告诉 AI 使用 `describe_image` 或 `describe_clipboard` 工具。
+```bash
+openvl <路径/URL>      # 看图
+openvl -c               # 读剪贴板截图
+openvl <图片> -t 0.3    # 调推理强度（0~1，越低越严谨）
+```
 
 ## 配置
 

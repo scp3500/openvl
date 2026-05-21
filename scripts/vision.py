@@ -207,39 +207,49 @@ def describe_image(image_source, strength=None, from_clipboard=False):
         sys.exit(1)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("用法:")
-        print("  openvl <图片路径或URL>       # 看图")
-        print("  openvl --clip                # 从剪贴板读图")
-        print("  openvl <图片> -t 0.5         # 调强度")
-        print("  openvl --set-key <密钥>      # 设置 API Key")
-        print("  openvl --set-base <地址>     # 设置 API 地址")
-        print("  openvl --set-model <模型>    # 设置默认模型")
-        print("  openvl --show-config         # 查看当前配置")
-        print("  openvl --mcp [http|stdio]   # 启动 MCP 服务器")
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "-help", "help"):
+        print("用法: openvl <命令> [参数]")
         print()
-        sys.exit(1)
+        print("  看图:")
+        print("    openvl <图片路径或URL>       # 从文件或URL看图")
+        print("    openvl -c                    # 从剪贴板读图")
+        print("    openvl <图片> -t 0.3         # 调推理强度（0~1，越低越严谨）")
+        print()
+        print("  配置:")
+        print("    openvl -key <密钥>           # 设置 API Key")
+        print("    openvl -api <地址>           # 设置 API 地址")
+        print("    openvl -model <模型>         # 设置默认模型")
+        print("    openvl -cfg                  # 查看当前配置")
+        print()
+        print("  MCP:")
+        print("    openvl --mcp [http|stdio]   # 启动 MCP 服务器")
+        print()
+        sys.exit(0)
+    
+    if sys.argv[1] in ("-v", "--version"):
+        print("OpenVL v1.0.47")
+        sys.exit(0)
 
     # 配置管理命令
-    if sys.argv[1] == "--set-key":
+    if sys.argv[1] in ("--set-key", "-key"):
         if len(sys.argv) < 3:
             print("请提供 API Key")
             sys.exit(1)
         set_config("key", sys.argv[2])
         sys.exit(0)
-    if sys.argv[1] == "--set-base":
+    if sys.argv[1] in ("--set-base", "-api"):
         if len(sys.argv) < 3:
             print("请提供 API 地址")
             sys.exit(1)
         set_config("base", sys.argv[2])
         sys.exit(0)
-    if sys.argv[1] == "--set-model":
+    if sys.argv[1] in ("--set-model", "-model"):
         if len(sys.argv) < 3:
             print("请提供模型名")
             sys.exit(1)
         set_config("model", sys.argv[2])
         sys.exit(0)
-    if sys.argv[1] == "--show-config":
+    if sys.argv[1] in ("--show-config", "-cfg"):
         c = load_config()
         print(f"API 地址: {c['api_base']}")
         print(f"默认模型: {c['model']}")
@@ -258,7 +268,7 @@ if __name__ == "__main__":
         if sys.argv[i] == "-t":
             i += 1
             strength = float(sys.argv[i]) if i < len(sys.argv) else None
-        elif sys.argv[i] == "--clip":
+        elif sys.argv[i] in ("--clip", "-c"):
             clip = True
         else:
             img = sys.argv[i]
@@ -276,4 +286,4 @@ if __name__ == "__main__":
     elif img:
         describe_image(img, strength)
     else:
-        print("请提供图片路径或使用 --clip")
+        print("请提供图片路径或使用 -c")
