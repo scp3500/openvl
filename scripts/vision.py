@@ -441,10 +441,21 @@ def doctor():
     # API 连通性
     if has_key and has_base:
         try:
-            r = requests.get(cfg['api_base'].rstrip('/'), headers={"Authorization": f"Bearer {cfg['api_key']}"}, timeout=5)
-            check("API 连通", r.ok or r.status_code in (400,404), f"{r.status_code}")
+            r = requests.post(cfg['api_base'].rstrip('/'),
+                json={"model": cfg['model'] or "test", "messages":[{"role":"user","content":"hi"}], "max_tokens":1, "stream":False},
+                headers={"Authorization": f"Bearer {cfg['api_key']}", "Content-Type": "application/json"},
+                timeout=8)
+            ok = r.status_code in (200, 400, 422, 429)
+            msg = f"{r.status_code}" if r.status_code != 200 else "正常"
+            if r.status_code == 400:
+                try:
+                    err = r.json()
+                    m = err.get('error',{}).get('message','') or err.get('message','')
+                    msg = f"400 ({m[:40]})" if m else "400 (请求格式有误，但服务可达)"
+                except: msg = "400 (服务可达)"
+            check("API 连通", ok, msg)
         except Exception as e:
-            check("API 连通", False, str(e))
+            check("API 连通", False, str(e)[:50])
     else:
         check("API 连通", False, "跳过（Key 或地址未配置）")
     
