@@ -299,7 +299,7 @@ def call_chat(api_url, api_key, payload):
                     pass
     print()
 
-def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False):
+def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False, query=None):
     config = load_config()
     if not config["api_key"]:
         print("错误: 未配置 API Key")
@@ -334,6 +334,8 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
             b64 = b64data
 
     prompt = load_prompt()
+    if query:
+        prompt += "\n\n用户问题：" + query
     api_type = detect_api_type(config["api_base"])
 
     # 构建通用 payload（OpenAI 格式）
@@ -435,6 +437,7 @@ if __name__ == "__main__":
     strength = None
     thinking_effort = None
     clip = False
+    query_parts = []
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "-t":
@@ -445,9 +448,12 @@ if __name__ == "__main__":
             thinking_effort = sys.argv[i] if i < len(sys.argv) else "high"
         elif sys.argv[i] in ("--clip", "-c"):
             clip = True
-        else:
+        elif img is None:
             img = sys.argv[i]
+        else:
+            query_parts.append(sys.argv[i])
         i += 1
+    query = " ".join(query_parts) if query_parts else None
 
     if sys.argv[1] == "--mcp":
         import mcp_server
@@ -457,8 +463,8 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if clip:
-        describe_image(None, strength, thinking_effort, from_clipboard=True)
+        describe_image(None, strength, thinking_effort, from_clipboard=True, query=query)
     elif img:
-        describe_image(img, strength, thinking_effort)
+        describe_image(img, strength, thinking_effort, query=query)
     else:
         print("请提供图片路径或使用 -c")

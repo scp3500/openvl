@@ -37,10 +37,11 @@ npm install -g @scp3500/openvl
 ## 使用方式
 
 ```bash
-openvl <路径/URL>      # 看图
-openvl -c               # 读剪贴板截图
-openvl <图片> -t 0.3    # 温度（0~1，越低越严谨）
-openvl <图片> -T high   # 思考深度 (low|medium|high)
+openvl <路径/URL>                 # 看图
+openvl -c                          # 读剪贴板截图
+openvl -c 用户的问题               # 带问题读图（自动拼到提示词末尾）
+openvl <图片> -t 0.3               # 温度（0~1，越低越严谨）
+openvl <图片> -T high              # 思考深度 (low|medium|high)
 ```
 
 ## 配置
