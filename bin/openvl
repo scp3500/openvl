@@ -24,7 +24,7 @@ function findPython() {
     
     // Windows 上扫描常见安装路径
     if (process.platform === 'win32') {
-        const home = process.env.USERPROFILE || 'C:\\Users\\default';
+        const home = process.env.USERPROFILE || '';
         const candidates = [
             path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Python'),
             path.join(home, 'AppData', 'Local', 'Programs', 'Python'),
