@@ -68,7 +68,7 @@ def set_config(key, value):
 
 
 def load_config():
-    config = {"api_key": "", "api_base": "https://api.siliconflow.cn/v1", "model": "Qwen/Qwen3.5-397B-A17B"}
+    config = {"api_key": "", "api_base": "", "model": ""}
     
     # 优先级：环境变量 > 配置文件
     env_key = os.environ.get("VISION_API_KEY", "")
@@ -76,7 +76,7 @@ def load_config():
         config["api_key"] = env_key
     env_base = os.environ.get("VISION_API_BASE", "")
     if env_base:
-        config["api_base"] = env_base.rstrip("/") + "/v1"
+        config["api_base"] = env_base.rstrip("/")
     env_model = os.environ.get("VISION_MODEL", "")
     if env_model:
         config["model"] = env_model
@@ -95,7 +95,7 @@ def load_config():
                 if line.startswith("VISION_API_KEY=") and "你的" not in line:
                     config["api_key"] = line.split("=", 1)[1].strip()
                 elif line.startswith("VISION_API_BASE="):
-                    config["api_base"] = line.split("=", 1)[1].strip().rstrip("/") + "/v1"
+                    config["api_base"] = line.split("=", 1)[1].strip().rstrip("/")
                 elif line.startswith("VISION_MODEL="):
                     config["model"] = line.split("=", 1)[1].strip()
     return config
@@ -203,13 +203,18 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
     }
 
     try:
-        api_url = f"{config['api_base']}/chat/completions"
+        api_url = config["api_base"].rstrip("/")
         resp = requests.post(api_url, headers=headers, json=payload, timeout=60)
         if resp.status_code != 200:
             print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
             sys.exit(1)
         result = resp.json()
-        print(result["choices"][0]["message"]["content"])
+        if "choices" in result:
+            print(result["choices"][0]["message"]["content"])
+        elif "output" in result:
+            print(result["output"][0]["content"][0]["text"])
+        else:
+            print(result)
     except requests.exceptions.Timeout:
         print("请求超时，请重试")
         sys.exit(1)

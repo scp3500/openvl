@@ -50,11 +50,14 @@ openvl -cfg                  # 查看配置
 | 2 | npm 包目录 | `node_modules/@scp3500/openvl/config.env` |
 | 1 | Pi skills 目录 | `~/.pi/agent/skills/openvl/config.env` |
 
-编辑对应位置的 `config.env`：
+编辑对应位置的 `config.env`，`VISION_API_BASE` 填完整 API 地址：
 
 ```ini
 VISION_API_KEY=你的API密钥
-VISION_API_BASE=https://你的中转站/v1
+# Chat Completions 接口
+VISION_API_BASE=https://你的中转站/v1/chat/completions
+# Responses 接口（OpenAI 新格式）
+# VISION_API_BASE=https://你的中转站/v1/responses
 VISION_MODEL=模型ID
 ```
 
