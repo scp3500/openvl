@@ -8,12 +8,14 @@
 
 1. 复制插件文件：
    ```bash
+   mkdir -p ~/.config/opencode/plugin
    cp integrations/opencode/openvl-image.ts ~/.config/opencode/plugin/
    ```
-2. 编辑 `~/.config/opencode/opencode.json`，添加：
+2. 编辑 `~/.config/opencode/opencode.json`，添加 `plugin` 字段：
    ```json
    "plugin": ["./plugin/openvl-image.ts"]
    ```
+   完整示例见 `integrations/opencode/opencode.example.json`。
 3. 重启 OpenCode
 
 ## Claude Code

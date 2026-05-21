@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "你的模型",
+  "provider": {
+    "your-provider": {
+      "options": {
+        "apiKey": "你的 Key"
+      }
+    }
+  },
+  "plugin": ["./plugin/openvl-image.ts"]
+}
