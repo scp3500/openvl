@@ -71,12 +71,12 @@ VISION_MODEL=模型ID
 
 ### OpenCode（推荐）
 
-OpenCode 粘贴图片时，插件自动拦截 → 存到 `%TEMP%` → 消息中替换为 `[Image: 路径]` → AI 自动调 `openvl` 读取。无需手动操作。
+插件拦截粘贴的图片 → 存到 `%TEMP%` → 替换为 `[Image: 路径]` 标记。AGENTS.md 告诉 AI 看到标记就调 `openvl`。
 
 安装：
 1. 复制插件：`cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/`
 2. `opencode.json` 添加 `"plugin": ["./plugin/openvl-image.mjs"]`
-3. 在 `AGENTS.md` 中添加图片处理规则（见 `integrations/README.md`）
+3. `AGENTS.md` 添加图片规则（参考 `integrations/README.md`）
 
 ### Claude Code / Pi
 

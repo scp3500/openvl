@@ -69,7 +69,7 @@ VISION_MODEL=model-id
 
 ### OpenCode (Recommended)
 
-When pasting an image in OpenCode, the plugin intercepts it → saves to `%TEMP%` → replaces with `[Image: path]` → AI auto-calls `openvl`. No manual steps needed.
+The plugin intercepts pasted images → saves to `%TEMP%` → replaces with `[Image: path]` markers. `AGENTS.md` tells the AI to call `openvl` when it sees these markers.
 
 Setup:
 1. Copy plugin: `cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/`
