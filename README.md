@@ -1,5 +1,7 @@
 # OpenVL
 
+[中文](README.md) | [English](README.en.md)
+
 让没有视觉能力的 AI 模型也能看懂图片。
 
 用户发图片 → OpenVL 调用多模态 API → 返回文字描述 → AI 根据描述回复
