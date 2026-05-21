@@ -24,15 +24,19 @@ try:
         OPENVL_VERSION = json.load(f).get("version", "0.0.0")
 except: pass
 
-# 异步检查更新
-import threading
+# 每日检查更新
+import threading, time
+CHECK_FILE = Path(os.environ.get("TEMP", "/tmp")) / "openvl_update_check"
 def _check_update():
     try:
+        if CHECK_FILE.exists() and time.time() - CHECK_FILE.stat().st_mtime < 86400:
+            return
         r = requests.get("https://registry.npmjs.org/@scp3500/openvl/latest", timeout=2)
         latest = r.json().get("version", "")
         if latest and latest != OPENVL_VERSION:
-            print(f"\n  OpenVL {latest} 可用 (当前 {OPENVL_VERSION})", file=sys.stderr)
+            print(f"\n  新版 OpenVL {latest} 可用 (当前 {OPENVL_VERSION})", file=sys.stderr)
             print(f"  更新: npm update -g @scp3500/openvl\n", file=sys.stderr)
+        CHECK_FILE.touch()
     except:
         pass
 threading.Thread(target=_check_update, daemon=True).start()
