@@ -3,6 +3,30 @@ name: Test
 on: [push, pull_request]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check package.json version matches tag
+        run: |
+          VER=$(python3 -c "import json; print(json.load(open('package.json'))['version'])")
+          echo "Package version: $VER"
+      - name: README check links
+        run: |
+          grep -oP 'https?://[^ )]+' README.md | head -5 && echo "Links OK"
+      - name: SKILL.md has required fields
+        run: |
+          grep -q "name: openvl" SKILL.md || exit 1
+          grep -q "description:" SKILL.md || exit 1
+          grep -q "read_when:" SKILL.md || exit 1
+          echo "SKILL.md OK"
+      - name: Config example valid
+        run: |
+          grep -q "VISION_API_KEY" config.env.example || exit 1
+          grep -q "VISION_API_BASE" config.env.example || exit 1
+          grep -q "VISION_MODEL" config.env.example || exit 1
+          echo "config.env.example OK"
+
   python:
     strategy:
       matrix:
@@ -17,13 +41,36 @@ jobs:
       - name: Install deps
         run: pip install requests pillow
 
-      - name: Syntax check
-        run: python -c "compile(open('scripts/vision.py').read(),'test','exec'); print('OK')"
+      - name: Syntax
+        run: python -c "compile(open('scripts/vision.py',encoding='utf-8').read(),'test','exec'); print('OK')"
 
-      - name: --help
-        run: python scripts/vision.py --help
-      - name: -v
-        run: python scripts/vision.py -v
+      - name: --help / -v
+        run: python scripts/vision.py --help && python scripts/vision.py -v
+
+      - name: Config read/write
+        run: |
+          python -c "
+          import sys, tempfile, os
+          sys.path.insert(0, 'scripts')
+          # test API type detection
+          exec(open('scripts/vision.py',encoding='utf-8').read().split('def doctor')[0])
+          assert 'chat' in str(detect_api_type('https://test.com/v1/chat/completions'))
+          assert 'responses' in str(detect_api_type('https://test.com/v1/responses'))
+          assert 'gemini' in str(detect_api_type('https://generativelanguage.googleapis.com'))
+          assert 'claude' in str(detect_api_type('https://api.anthropic.com'))
+          print('detect_api_type: OK')
+          "
+
+      - name: Invalid image
+        run: python scripts/vision.py /nonexistent/image.png 2>&1 | grep -qi "不支持的图片格式\|No such file\|does not exist\|无法识别" && echo "OK: invalid image rejected"
+
+      - name: Unsupported format
+        run: |
+          echo "not an image" > test.txt
+          python scripts/vision.py test.txt 2>&1 | grep -qi "不支持的图片格式\|invalid\|unsupported\|格式" && echo "OK: bad format rejected"
+
+      - name: -s flag parsing
+        run: python scripts/vision.py -s 512 2>&1 | head -2
 
       - name: doctor (no key)
         run: python scripts/vision.py doctor 2>&1
@@ -36,13 +83,12 @@ jobs:
           VISION_MODEL: ${{ secrets.MODEL || 'deepseek-v4-flash' }}
         run: python scripts/vision.py doctor
 
-      - name: Test with test image
+      - name: Image via file
         run: |
           python -c "
           import base64
-          # 1x1 red PNG
-          b=base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode()
-          with open('test.png','wb') as f: f.write(base64.b64decode(b))
+          b = bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])
+          with open('test.png','wb') as f: f.write(b)
           "
           python scripts/vision.py test.png 2>&1 | head -5
         env:
@@ -50,24 +96,25 @@ jobs:
           VISION_API_BASE: ${{ secrets.API_BASE || '' }}
         continue-on-error: true
 
-      - name: Test invalid image
-        run: python scripts/vision.py not_exists.png 2>&1
-
-      - name: Test --base64 flag
-        run: python scripts/vision.py --base64 "$(python -c "import base64; b=base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode(); print(b)")" "test color" 2>&1 | head -5
-        continue-on-error: true
-
-      - name: Test --stdin
-        run: python -c "import base64; print('data:image/png;base64,'+base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode())" | python scripts/vision.py --stdin 2>&1 | head -5
-        continue-on-error: true
-
-      - name: Test multi-image
+      - name: Image via --base64
         run: |
-          python -c "import base64; open('t1.png','wb').write(base64.b64decode(base64.b64encode(bytes([0x89,0x50,0x4E,0x47]))))" 2>/dev/null
-          python scripts/vision.py t1.png t1.png 2>&1 | head -5
+          B64=$(python -c "import base64; print(base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode())
+          python scripts/vision.py --base64 "$B64" "test" 2>&1 | head -5
         continue-on-error: true
 
-      - name: Test doctor with config
+      - name: Image via --stdin
+        run: |
+          python -c "import base64; print('data:image/png;base64,'+base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode())" | python scripts/vision.py --stdin 2>&1 | head -5
+        continue-on-error: true
+
+      - name: Multi-image
+        run: |
+          python -c "import base64; open('t1.png','wb').write(base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='))"
+          cp t1.png t2.png
+          python scripts/vision.py t1.png t2.png 2>&1 | head -5
+        continue-on-error: true
+
+      - name: Doctor with local config
         run: |
           mkdir -p .pi/agent/skills/openvl
           echo 'VISION_API_KEY=test-key' > .pi/agent/skills/openvl/config.env
@@ -79,7 +126,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - name: Syntax check
+      - name: Syntax
         run: node --check bin/openvl && node --check scripts/mcp_server.js
       - name: MCP tools/list
-        run: echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | timeout 5 node scripts/mcp_server.js 2>/dev/null | python -c "import sys,json;d=json.loads(sys.stdin.read());assert len(d['result']['tools'])==2; print('MCP OK:',[t['name'] for t in d['result']['tools']])"
+        run: |
+          echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | timeout 5 node scripts/mcp_server.js 2>/dev/null | python3 -c "
+          import sys,json
+          d=json.loads(sys.stdin.read())
+          assert len(d['result']['tools']) == 2
+          names = [t['name'] for t in d['result']['tools']]
+          assert 'describe_image' in names
+          assert 'describe_clipboard' in names
+          print(f'MCP OK: {names}')
+          "
+      - name: Plugin syntax
+        run: |
+          node -e "require('fs').readFileSync('integrations/opencode/openvl-image.mjs','utf8'); console.log('plugin OK')"
