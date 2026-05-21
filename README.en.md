@@ -18,8 +18,9 @@ npm install -g @scp3500/openvl
 openvl -key sk-your-key
 openvl -api https://your-proxy/v1/chat/completions
 
-# 3. Screenshot to clipboard, then read
-openvl -c "what's in this image"
+# 3. Use it
+openvl D:\screenshot.png        # Read a file directly
+openvl -c "what's in this image" # Or screenshot to clipboard
 ```
 
 AI IDE (Pi / Claude Code) users also copy skills:

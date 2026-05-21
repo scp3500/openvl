@@ -18,8 +18,9 @@ npm install -g @scp3500/openvl
 openvl -key sk-你的密钥
 openvl -api https://你的中转站/v1/chat/completions
 
-# 3. 截图到剪贴板，直接读
-openvl -c "这张图里有什么"
+# 3. 用起来
+openvl D:\截图.png              # 直接看文件
+openvl -c "这张图里有什么"       # 或截图到剪贴板提问
 ```
 
 AI IDE（Pi / Claude Code）用户额外复制 skills：
