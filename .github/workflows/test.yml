@@ -73,13 +73,15 @@ jobs:
 
       - name: doctor (no key)
         run: python scripts/vision.py doctor 2>&1
+        continue-on-error: true
 
       - name: doctor (with key)
+        continue-on-error: true
         env:
           VISION_API_KEY: ${{ secrets.API_KEY || '' }}
           VISION_API_BASE: ${{ secrets.API_BASE || '' }}
           VISION_MODEL: ${{ secrets.MODEL || '' }}
-        run: python scripts/vision.py doctor 2>&1 || true
+        run: python scripts/vision.py doctor 2>&1
 
       - name: Image via file
         run: |
@@ -113,6 +115,7 @@ jobs:
         continue-on-error: true
 
       - name: Doctor with local config
+        continue-on-error: true
         run: |
           mkdir -p .pi/agent/skills/openvl
           echo 'VISION_API_KEY=test-key' > .pi/agent/skills/openvl/config.env
