@@ -405,7 +405,63 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
         print(f"请求出错: {e}")
         sys.exit(1)
 
-def doctor():
+def setup():
+    """交互式配置向导"""
+    print("OpenVL 配置向导")
+    print("=" * 40)
+    print()
+    
+    cfg = load_config()
+    
+    # API Key
+    current = cfg["api_key"]
+    if current:
+        print(f"当前 API Key: {current[:8]}...{current[-4:]}")
+        if input("是否修改？(y/N): ").lower() != "y":
+            key = current
+        else:
+            key = input("输入新的 API Key: ").strip()
+    else:
+        print("需要配置 API Key")
+        key = input("输入你的 API Key: ").strip()
+    if key and key != current:
+        set_config("key", key)
+    
+    # API Base
+    current_base = cfg["api_base"]
+    print()
+    if current_base:
+        print(f"当前 API 地址: {current_base}")
+        if input("是否修改？(y/N): ").lower() != "y":
+            api_base = current_base
+        else:
+            api_base = input("输入 API 地址: ").strip()
+    else:
+        print("需要配置 API 地址")
+        print("常见格式:")
+        print("  Chat Completions: https://你的中转站/v1/chat/completions")
+        print("  Responses:        https://你的中转站/v1/responses")
+        print("  官方 DeepSeek:    https://api.deepseek.com/v1/chat/completions")
+        api_base = input("输入 API 地址: ").strip()
+    if api_base and api_base != current_base:
+        set_config("base", api_base)
+    
+    # Model
+    current_model = cfg["model"]
+    print()
+    if current_model:
+        print(f"当前模型: {current_model}")
+        if input("是否修改？(y/N): ").lower() != "y":
+            model = current_model
+        else:
+            model = input("输入模型名: ").strip()
+    else:
+        model = input("输入模型名（如 deepseek-v4-flash）: ").strip()
+    if model and model != current_model:
+        set_config("model", model)
+    
+    print()
+    print("=")
     """诊断工具：检查环境配置"""
     ok = True
     def check(name, status, detail=""):
@@ -467,6 +523,9 @@ def doctor():
     sys.exit(0 if ok else 1)
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] in ("--setup", "setup"):
+        setup()
+        sys.exit(0)
     if len(sys.argv) > 1 and sys.argv[1] in ("--doctor", "doctor"):
         doctor()
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "-help", "help"):
@@ -487,6 +546,7 @@ if __name__ == "__main__":
         print("    openvl -model <模型>         # 设置默认模型")
         print("    openvl -cfg                  # 查看当前配置")
         print("    openvl doctor               # 环境诊断")
+        print("    openvl setup                # 交互式配置")
         print()
         print("  MCP:")
         print("    openvl --mcp [http|stdio]   # 启动 MCP 服务器")
