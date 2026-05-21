@@ -405,7 +405,59 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
         print(f"请求出错: {e}")
         sys.exit(1)
 
+def doctor():
+    """诊断工具：检查环境配置"""
+    ok = True
+    def check(name, status, detail=""):
+        nonlocal ok
+        mark = "✓" if status else "✗"
+        if not status: ok = False
+        print(f"  {mark} {name} {detail}")
+    
+    print(f"OpenVL v{OPENVL_VERSION} 诊断")
+    print()
+    
+    # Python
+    check("Python", True, sys.version.split()[0])
+    
+    # 依赖
+    try: import requests; check("requests", True, requests.__version__)
+    except: check("requests", False, "未安装，请运行 pip install requests")
+    try: from PIL import Image; check("Pillow", True, Image.__version__)
+    except: check("Pillow", False, "未安装，请运行 pip install pillow（可选，用于缩放）")
+    
+    # 配置文件
+    cfg_exists = ENV_FILE.exists()
+    check("配置文件", cfg_exists, str(ENV_FILE) if cfg_exists else "未找到")
+    
+    # API 配置
+    cfg = load_config()
+    has_key = bool(cfg["api_key"])
+    has_base = bool(cfg["api_base"])
+    check("API Key", has_key, "已设置" if has_key else "未设置")
+    check("API 地址", has_base, cfg["api_base"] if has_base else "未设置")
+    check("模型", bool(cfg["model"]), cfg["model"] if cfg["model"] else "未设置")
+    
+    # API 连通性
+    if has_key and has_base:
+        try:
+            r = requests.get(cfg['api_base'].rstrip('/'), headers={"Authorization": f"Bearer {cfg['api_key']}"}, timeout=5)
+            check("API 连通", r.ok or r.status_code in (400,404), f"{r.status_code}")
+        except Exception as e:
+            check("API 连通", False, str(e))
+    else:
+        check("API 连通", False, "跳过（Key 或地址未配置）")
+    
+    print()
+    if ok:
+        print("  一切正常，可以看图了。")
+    else:
+        print("  有问题需要修复，见上方 ✗ 标记。")
+    sys.exit(0 if ok else 1)
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] in ("--doctor", "doctor"):
+        doctor()
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "-help", "help"):
         print("用法: openvl <命令> [参数]")
         print()
@@ -423,6 +475,7 @@ if __name__ == "__main__":
         print("    openvl -api <地址>           # 设置 API 地址")
         print("    openvl -model <模型>         # 设置默认模型")
         print("    openvl -cfg                  # 查看当前配置")
+        print("    openvl doctor               # 环境诊断")
         print()
         print("  MCP:")
         print("    openvl --mcp [http|stdio]   # 启动 MCP 服务器")
