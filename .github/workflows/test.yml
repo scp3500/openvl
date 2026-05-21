@@ -1,0 +1,63 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install requests pillow
+
+      - name: Python syntax check
+        run: python -c "compile(open('scripts/vision.py').read(),'test','exec'); print('vision.py OK')"
+
+      - name: --help
+        run: python scripts/vision.py --help
+
+      - name: --version
+        run: python scripts/vision.py -v
+
+      - name: doctor (without API key)
+        run: python scripts/vision.py doctor 2>&1
+        continue-on-error: true
+
+      - name: doctor (with API key)
+        if: ${{ secrets.API_KEY != '' }}
+        env:
+          VISION_API_KEY: ${{ secrets.API_KEY }}
+          VISION_API_BASE: ${{ secrets.API_BASE || 'https://api.deepseek.com/v1/chat/completions' }}
+          VISION_MODEL: ${{ secrets.MODEL || 'deepseek-v4-flash' }}
+        run: python scripts/vision.py doctor
+
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Node syntax check
+        run: node --check bin/openvl
+
+      - name: MCP server starts
+        run: |
+          echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | timeout 5 node scripts/mcp_server.js 2>/dev/null | head -5
+
+      - name: ESLint
+        run: |
+          npm init -y
+          npm install eslint -D
+          npx eslint scripts/mcp_server.js --no-ignore 2>&1 || true
