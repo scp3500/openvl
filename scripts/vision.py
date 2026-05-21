@@ -14,8 +14,15 @@ import requests
 from pathlib import Path
 
 SKILL_DIR = Path(__file__).resolve().parent.parent
+PKG_FILE = SKILL_DIR / "package.json"
 ENV_FILE = SKILL_DIR / "config.env"
 PROMPT_FILE = SKILL_DIR / "prompts" / "describe.md"
+
+OPENVL_VERSION = "0.0.0"
+try:
+    with open(PKG_FILE, encoding="utf-8") as f:
+        OPENVL_VERSION = json.load(f).get("version", "0.0.0")
+except: pass
 
 # 备用配置：从 npm 包运行时，查找用户 skills 目录配置
 HOME_DIR = Path(os.environ.get("USERPROFILE", "")) / ".pi" / "agent" / "skills" / "openvl"
@@ -406,7 +413,7 @@ if __name__ == "__main__":
         sys.exit(0)
     
     if sys.argv[1] in ("-v", "--version"):
-        print("OpenVL v1.0.52")
+        print(f"OpenVL v{OPENVL_VERSION}")
         sys.exit(0)
 
     # 配置管理命令
