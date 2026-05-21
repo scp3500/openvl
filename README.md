@@ -73,10 +73,10 @@ OpenVL 支持多种接入方式，按需求选择：
 
 | 工具 | 方式 | 体验 | 适用场景 |
 |------|------|------|----------|
-| **OpenCode** | 插件 + AGENTS.md | 🤖 全自动 | 粘贴图片 → 自动分析，无需任何操作 |
-| **Claude Code** | skills | 👆 半自动 | 图片路径出现时 AI 自动调 openvl |
-| **Pi** | skills | 👆 半自动 | 同上 |
-| **Cherry Studio** | MCP | 🖱️ 手动 | 告诉 AI "用 describe_image 工具" |
+| **OpenCode** | 插件 + AGENTS.md | 全自动 | 粘贴图片 → 自动分析，无需任何操作 |
+| **Claude Code** | skills | 半自动 | 图片路径出现时 AI 自动调 openvl |
+| **Pi** | skills | 半自动 | 同上 |
+| **Cherry Studio** | MCP | 手动 | 告诉 AI "用 describe_image 工具" |
 
 ### OpenCode（推荐，全自动体验最佳）
 

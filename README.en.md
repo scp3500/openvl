@@ -71,10 +71,10 @@ OpenVL supports multiple integration methods. Choose based on your workflow:
 
 | Tool | Method | Experience | Best for |
 |------|--------|------------|----------|
-| **OpenCode** | Plugin + AGENTS.md | 🤖 Fully automatic | Paste → auto-analyze, zero effort |
-| **Claude Code** | skills | 👆 Semi-automatic | AI auto-calls openvl when image path appears |
-| **Pi** | skills | 👆 Semi-automatic | Same as above |
-| **Cherry Studio** | MCP | 🖱️ Manual | Tell AI "use describe_image tool" |
+| **OpenCode** | Plugin + AGENTS.md | Fully automatic | Paste → auto-analyze, zero effort |
+| **Claude Code** | skills | Semi-automatic | AI auto-calls openvl when image path appears |
+| **Pi** | skills | Semi-automatic | Same as above |
+| **Cherry Studio** | MCP | Manual | Tell AI "use describe_image tool" |
 
 ### OpenCode (Recommended, best automatic experience)
 
