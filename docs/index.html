@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenVL - 让 AI 看懂图片</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1f2937; background: #f9fafb; line-height: 1.6; }
+header { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: #fff; padding: 48px 24px; text-align: center; }
+header h1 { font-size: 2.5em; margin-bottom: 8px; }
+header p { font-size: 1.1em; opacity: .85; }
+.container { max-width: 880px; margin: 0 auto; padding: 24px; }
+section { background: #fff; border-radius: 12px; padding: 32px; margin: 24px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+h2 { font-size: 1.4em; margin-bottom: 16px; color: #1e3a5f; }
+.example { display: flex; gap: 24px; flex-wrap: wrap; }
+.example-card { flex: 1; min-width: 240px; background: #f3f4f6; border-radius: 8px; padding: 16px; }
+.example-card .label { font-size: .85em; color: #6b7280; margin-bottom: 4px; }
+.example-card .img-placeholder { height: 140px; background: #d1d5db; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: .9em; }
+.example-card .output { margin-top: 12px; font-size: .9em; background: #fff; border-radius: 6px; padding: 12px; border: 1px solid #e5e7eb; }
+code { background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: .9em; }
+pre { background: #111827; color: #e5e7eb; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: .9em; margin: 12px 0; }
+pre .cmd { color: #93c5fd; }
+.btn { display: inline-block; padding: 10px 20px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 500; }
+.btn:hover { background: #1d4ed8; }
+.btns { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+table { width: 100%; border-collapse: collapse; font-size: .9em; }
+td, th { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+th { background: #f3f4f6; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>OpenVL</h1>
+  <p>给没有视觉能力的 AI 模型装上眼睛</p>
+</header>
+
+<div class="container">
+
+<section>
+  <h2>这是什么？</h2>
+  <p>OpenVL 是一个命令行工具，让 <strong>DeepSeek、OpenCode、Claude Code</strong> 等非视觉模型也能看懂图片。 </p>
+  <div style="text-align:center;margin:24px 0;padding:20px;background:#f3f4f6;border-radius:8px;font-size:1.1em">
+    🖼️ 用户发图片 → OpenVL 调多模态 API → 📝 返回文字描述 → 🤖 AI 根据描述回复
+  </div>
+</section>
+
+<section>
+  <h2>效果演示</h2>
+  <p style="margin-bottom:16px">截图 → 直接提问，视觉模型回答：</p>
+  <div class="example">
+    <div class="example-card">
+      <div style="background:#e5e7eb;border-radius:6px;padding:12px;font-size:.85em;line-height:1.4">
+        <strong>📊 代码统计</strong><br>
+        <span style="color:#6b7280">
+        Languages<br>
+        Python 51.8% ████████████████<br>
+        JavaScript 22.5% ███████<br>
+        TypeScript 12.3% ████<br>
+        Other 13.4% ████
+        </span>
+      </div>
+      <div class="output">
+        <strong>用户：</strong>这个项目用什么语言写的？<br>
+        <strong>AI：</strong>Python 占 51.8%，其次是 JavaScript 22.5%……
+      </div>
+    </div>
+    <div class="example-card">
+      <div style="background:#fff3cd;border-radius:6px;padding:12px;font-size:.85em;line-height:1.4">
+        <strong>🎨 活动海报</strong><br>
+        <span style="color:#6b7280">
+        因梦而聚<br>
+        6月20日 长春蔚蓝档案Only
+        </span>
+      </div>
+      <div class="output">
+        <strong>用户：</strong>这张海报是什么活动？<br>
+        <strong>AI：</strong>6月20日在长春的蔚蓝档案 Only 同人展……
+      </div>
+    </div>
+    <div class="example-card">
+      <div style="background:#e0f2fe;border-radius:6px;padding:12px;font-size:.85em;line-height:1.4">
+        <strong>🖥️ 界面截图</strong><br>
+        <span style="color:#6b7280">
+        使用统计<br>
+        2026/5/21 09:54:44 GPT-5.4 Mini<br>
+        2026/5/21 09:54:34 GPT-5.4 Mini
+        </span>
+      </div>
+      <div class="output">
+        <strong>用户：</strong>我这个月用了多少 token？<br>
+        <strong>AI：</strong>共 2954 条记录，主要是 GPT-5.4 Mini……
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>快速安装</h2>
+  <pre><span class="cmd"># 安装</span>
+npm install -g @scp3500/openvl
+
+<span class="cmd"># 配置 API</span>
+openvl setup
+
+<span class="cmd"># 截图提问</span>
+openvl -c "这张图里有什么"</pre>
+  <div class="btns">
+    <a class="btn" href="https://github.com/scp3500/openvl">GitHub</a>
+    <a class="btn" href="https://www.npmjs.com/package/@scp3500/openvl">npm</a>
+  </div>
+</section>
+
+<section>
+  <h2>支持的命令</h2>
+  <table>
+    <tr><th>命令</th><th>说明</th></tr>
+    <tr><td><code>openvl &lt;路径&gt;</code></td><td>直接看文件</td></tr>
+    <tr><td><code>openvl -c</code></td><td>读剪贴板截图</td></tr>
+    <tr><td><code>openvl -c "提问"</code></td><td>截图 + 提问</td></tr>
+    <tr><td><code>openvl --stdin</code></td><td>从管道读 data URI</td></tr>
+    <tr><td><code>openvl --base64 ...</code></td><td>传 base64 数据</td></tr>
+    <tr><td><code>openvl a.png b.png</code></td><td>多张图一起传</td></tr>
+    <tr><td><code>openvl doctor</code></td><td>环境诊断</td></tr>
+    <tr><td><code>openvl setup</code></td><td>交互式配置</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>支持的 AI 工具</h2>
+  <table>
+    <tr><th>工具</th><th>方式</th><th>体验</th></tr>
+    <tr><td>OpenCode</td><td>插件 + AGENTS.md</td><td>全自动</td></tr>
+    <tr><td>Claude Code</td><td>skills</td><td>半自动</td></tr>
+    <tr><td>Pi</td><td>skills</td><td>半自动</td></tr>
+    <tr><td>Cherry Studio</td><td>MCP</td><td>手动</td></tr>
+  </table>
+</section>
+
+<footer style="text-align:center;padding:24px;color:#6b7280;font-size:.85em">
+  MIT License · Made by <a href="https://github.com/scp3500">scp3500</a>
+</footer>
+
+</div>
+</body>
+</html>
