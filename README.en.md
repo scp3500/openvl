@@ -67,22 +67,47 @@ VISION_MODEL=model-id
 
 ## Tool Integration
 
-### OpenCode (Recommended)
+OpenVL supports multiple integration methods. Choose based on your workflow:
 
-The plugin intercepts pasted images → saves to `%TEMP%` → replaces with `[Image: path]` markers. `AGENTS.md` tells the AI to call `openvl` when it sees these markers.
+| Tool | Method | Experience | Best for |
+|------|--------|------------|----------|
+| **OpenCode** | Plugin + AGENTS.md | 🤖 Fully automatic | Paste → auto-analyze, zero effort |
+| **Claude Code** | skills | 👆 Semi-automatic | AI auto-calls openvl when image path appears |
+| **Pi** | skills | 👆 Semi-automatic | Same as above |
+| **Cherry Studio** | MCP | 🖱️ Manual | Tell AI "use describe_image tool" |
+
+### OpenCode (Recommended, best automatic experience)
+
+Paste an image → plugin intercepts → saves to temp file → replaces with `[Image: path]` marker → AI auto-calls `openvl`. Just paste and go.
 
 Setup:
-1. Copy plugin: `cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/`
-2. Add to `opencode.json`: `"plugin": ["./plugin/openvl-image.mjs"]`
-3. Add image rules to `AGENTS.md` (see `integrations/README.md`)
+```bash
+# 1. Copy plugin
+cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
 
-### Claude Code / Pi
+# 2. Add plugin to opencode.json
+# "plugin": ["./plugin/openvl-image.mjs"]
 
-Skills auto-detect image paths → call `openvl`.
+# 3. Add image rules to AGENTS.md (see integrations/README.md)
+```
 
-### Cherry Studio
+### Claude Code / Pi (skills)
 
-Use `openvl --mcp` as MCP server.
+AI detects image paths or user mentions images, then auto-calls `openvl` via skills rules. No plugin needed, simple setup.
+
+```bash
+git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
+```
+
+### Cherry Studio (MCP)
+
+Connect via MCP protocol. Users manually ask the AI to use `describe_image` or `describe_clipboard` tools. For users already in an MCP workflow.
+
+| Field | Value |
+|-------|-------|
+| Command | `openvl` |
+| Args | `--mcp` |
+| Timeout | `90` |
 
 See `integrations/README.md`.
 
