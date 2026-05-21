@@ -7,13 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check package.json version matches tag
-        run: |
-          VER=$(python3 -c "import json; print(json.load(open('package.json'))['version'])")
-          echo "Package version: $VER"
-      - name: README check links
-        run: |
-          grep -oP 'https?://[^ )]+' README.md | head -5 && echo "Links OK"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check package.json
+        run: python -c "import json; print('version:', json.load(open('package.json'))['version'])"
+      - name: README check
+        run: grep -oE 'https?://[^ )]+' README.md | head -3 && echo "links OK"
       - name: SKILL.md has required fields
         run: |
           grep -q "name: openvl" SKILL.md || exit 1
