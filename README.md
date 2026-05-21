@@ -29,6 +29,7 @@ openvl <路径> 你的问题             # 带问题看图，视觉模型直接�
 openvl -c 你的问题                 # 带问题读剪贴板
 openvl <图片> -t 0.3               # 温度（0~1，越低越严谨）
 openvl <图片> -T high              # 思考深度 (low|medium|high)
+openvl <图片> -s 512               # 图片最大边长（默认1024，越小越省token）
 openvl -cfg                        # 查看配置
 ```
 

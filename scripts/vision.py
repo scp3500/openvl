@@ -299,7 +299,7 @@ def call_chat(api_url, api_key, payload):
                     pass
     print()
 
-def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False, query=None):
+def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False, query=None, max_size=1024):
     config = load_config()
     if not config["api_key"]:
         print("错误: 未配置 API Key")
@@ -318,7 +318,7 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
         if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"):
             print(f"不支持的图片格式: {ext}")
             sys.exit(1)
-        resized = resize_image(image_source)
+        resized = resize_image(image_source, max_size=max_size)
         b64 = encode_image(resized)
         if resized != image_source:
             os.remove(resized)
@@ -386,6 +386,7 @@ if __name__ == "__main__":
         print("    openvl -c                    # 从剪贴板读图")
         print("    openvl <图片> -t 0.3         # 温度（0~1，越低越严谨）")
         print("    openvl <图片> -T low         # 思考深度 (low|medium|high)")
+        print("    openvl <图片> -s 512         # 图片最大边长（默认1024，越小越省）")
         print()
         print("  配置:")
         print("    openvl -key <密钥>           # 设置 API Key")
@@ -435,6 +436,7 @@ if __name__ == "__main__":
     img = None
     strength = None
     thinking_effort = None
+    max_size = 1024
     clip = False
     query_parts = []
     i = 1
@@ -445,6 +447,9 @@ if __name__ == "__main__":
         elif sys.argv[i] in ("-T", "--think"):
             i += 1
             thinking_effort = sys.argv[i] if i < len(sys.argv) else "high"
+        elif sys.argv[i] in ("-s", "--size"):
+            i += 1
+            max_size = int(sys.argv[i]) if i < len(sys.argv) else 1024
         elif sys.argv[i] in ("--clip", "-c"):
             clip = True
         elif img is None and not clip:
@@ -462,8 +467,8 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if clip:
-        describe_image(None, strength, thinking_effort, from_clipboard=True, query=query)
+        describe_image(None, strength, thinking_effort, from_clipboard=True, query=query, max_size=max_size)
     elif img:
-        describe_image(img, strength, thinking_effort, query=query)
+        describe_image(img, strength, thinking_effort, query=query, max_size=max_size)
     else:
         print("请提供图片路径或使用 -c")

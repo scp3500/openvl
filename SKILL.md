@@ -41,6 +41,7 @@ openvl <路径> 用户的问题            # 带问题看图
 openvl -c 用户的问题                # 带问题读剪贴板
 openvl <图片> -t 0.3                # 温度（0~1，越低越严谨）
 openvl <图片> -T high               # 思考深度 (low|medium|high)
+openvl <图片> -s 512                # 图片最大边长（默认1024，越小越省）
 ```
 
 ## 配置
