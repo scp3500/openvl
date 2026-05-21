@@ -17,6 +17,9 @@ SKILL_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = SKILL_DIR / "config.env"
 PROMPT_FILE = SKILL_DIR / "prompts" / "describe.md"
 
+# 备用配置：从 npm 包运行时，查找用户 skills 目录配置
+HOME_DIR = Path(os.environ.get("USERPROFILE", "")) / ".pi" / "agent" / "skills" / "openvl"
+
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding='utf-8')
@@ -79,8 +82,14 @@ def load_config():
         config["model"] = env_model
     
     # 环境变量不够则读配置文件
-    if not config["api_key"] and ENV_FILE.exists():
-        with open(ENV_FILE, encoding="utf-8") as f:
+    config_files = [ENV_FILE]
+    if HOME_DIR and HOME_DIR != SKILL_DIR:
+        config_files.append(HOME_DIR / "config.env")
+    
+    for cfg_file in config_files:
+        if not cfg_file.exists():
+            continue
+        with open(cfg_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line.startswith("VISION_API_KEY=") and "你的" not in line:
@@ -227,7 +236,7 @@ if __name__ == "__main__":
         sys.exit(0)
     
     if sys.argv[1] in ("-v", "--version"):
-        print("OpenVL v1.0.47")
+        print("OpenVL v1.0.52")
         sys.exit(0)
 
     # 配置管理命令

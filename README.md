@@ -41,18 +41,21 @@ openvl -cfg                  # 查看配置
 
 ## 配置
 
-编辑配置文件（`openvl` 目录下的 `config.env`）：
+按以下优先级查找（数值越高越优先）：
 
-- **npm 安装：** `<npm目录>/node_modules/@scp3500/openvl/config.env`
-- **skills 目录：** `<skills目录>/openvl/config.env`
+| 优先级 | 位置 | 说明 |
+|--------|------|------|
+| 3 | 系统环境变量 | `set VISION_API_KEY=...` |
+| 2 | npm 包目录 | `node_modules/@scp3500/openvl/config.env` |
+| 1 | Pi skills 目录 | `~/.pi/agent/skills/openvl/config.env` |
+
+编辑对应位置的 `config.env`：
 
 ```ini
 VISION_API_KEY=你的API密钥
 VISION_API_BASE=https://你的中转站/v1
 VISION_MODEL=模型ID
 ```
-
-也支持系统环境变量（优先级更高）。
 
 ## 许可证
 
