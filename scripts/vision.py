@@ -244,35 +244,60 @@ def call_claude(api_url, api_key, payload):
 
 def call_responses(api_url, api_key, payload):
     """调用 OpenAI Responses API"""
-    body = payload.copy()
-    if "messages" in body:
-        msg = body["messages"][0]
-        body["input"] = msg["content"]
-        del body["messages"]
+    input_items = []
+    for msg in payload.get("messages", []):
+        content_blocks = []
+        for item in msg.get("content", []):
+            if item.get("type") == "image_url":
+                content_blocks.append({"type": "input_image", "image_url": item["image_url"]["url"]})
+            elif item.get("type") == "text":
+                content_blocks.append({"type": "input_text", "text": item["text"]})
+        input_items.append({"role": msg.get("role", "user"), "content": content_blocks})
 
+    body = {"model": payload["model"], "input": input_items, "max_output_tokens": 1024, "stream": True}
+    if payload.get("temperature"):
+        body["temperature"] = payload["temperature"]
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    resp = requests.post(api_url, headers=headers, json=body, timeout=60)
+    resp = requests.post(api_url, headers=headers, json=body, stream=True, timeout=60)
     if resp.status_code != 200:
         print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
         sys.exit(1)
-    result = resp.json()
-    try:
-        print(result["output"][0]["content"][0]["text"])
-    except (KeyError, IndexError):
-        print(result)
+    for line in resp.iter_lines():
+        if not line:
+            continue
+        line = line.decode("utf-8", errors="replace")
+        if line.startswith("data: "):
+            data = line[6:]
+            if data == "[DONE]":
+                break
+            try:
+                chunk = json.loads(data)
+                if chunk.get("type") == "response.output_text.delta":
+                    print(chunk.get("delta", ""), end="", flush=True)
+            except json.JSONDecodeError:
+                pass
+    print()
 
 def call_chat(api_url, api_key, payload):
     """调用 OpenAI Chat Completions API"""
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=60)
+    resp = requests.post(api_url, headers=headers, json=payload, stream=True, timeout=60)
     if resp.status_code != 200:
         print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
         sys.exit(1)
-    result = resp.json()
-    try:
-        print(result["choices"][0]["message"]["content"])
-    except (KeyError, IndexError):
-        print(result)
+    for line in resp.iter_lines():
+        if line:
+            line = line.decode("utf-8", errors="replace")
+            if line.startswith("data: ") and line != "data: [DONE]":
+                try:
+                    chunk = json.loads(line[6:])
+                    delta = chunk.get("choices", [{}])[0].get("delta", {})
+                    content = delta.get("content", "")
+                    if content:
+                        print(content, end="", flush=True)
+                except json.JSONDecodeError:
+                    pass
+    print()
 
 def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False):
     config = load_config()
@@ -330,6 +355,7 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
         payload["temperature"] = strength
     if thinking_effort is not None:
         payload["reasoning_effort"] = thinking_effort
+    payload["stream"] = True
 
     api_url = config["api_base"].rstrip("/")
     api_key = config["api_key"]
