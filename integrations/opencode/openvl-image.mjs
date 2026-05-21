@@ -5,7 +5,7 @@ const TMP = process.env.TEMP || process.env.TMP || "/tmp";
 
 // 启动时清理旧缓存（保留最近 100 张）
 try {
-  const files = fs.readdirSync(TMP).filter(n => n.startsWith("openvl_") && n.endsWith(".png")).sort();
+  const files = fs.readdirSync(TMP).filter(n => n.startsWith("openvl_") && (n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".gif") || n.endsWith(".webp"))).sort();
   while (files.length > 100) fs.rmSync(path.join(TMP, files.shift()), { force: true });
 } catch {}
 
@@ -23,7 +23,8 @@ const plugin = async () => {
           const src = p.url || p.source?.path || "";
           if (!src) continue;
           idx++;
-          const tmp = path.join(TMP, `openvl_${ts}_${idx}.png`);
+          const ext = { "image/png": ".png", "image/jpeg": ".jpg", "image/gif": ".gif", "image/webp": ".webp", "image/bmp": ".bmp" }[p.mime] || ".png";
+          const tmp = path.join(TMP, `openvl_${ts}_${idx}${ext}`);
           try {
             if (src.startsWith("data:")) {
               fs.writeFileSync(tmp, Buffer.from(src.split(",")[1], "base64"));
