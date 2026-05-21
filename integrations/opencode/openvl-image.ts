@@ -33,7 +33,7 @@ export default (async () => {
           if (part.type === "image_url" && part.image_url?.url?.startsWith("data:")) {
             newParts.push({
               type: "text",
-              text: `[Image: ${part.image_url.url}]`,
+              text: `[Image: ${part.image_url.url.substring(0, 50)}...]`,
             });
           } else {
             newParts.push(part);
