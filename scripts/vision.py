@@ -304,7 +304,7 @@ def call_chat(api_url, api_key, payload):
                     pass
     print()
 
-def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False, query=None, max_size=1024):
+def describe_image(image_source=None, strength=None, thinking_effort=None, from_clipboard=False, query=None, max_size=1024, image_list=None):
     config = load_config()
     if not config["api_key"]:
         print("错误: 未配置 API Key")
@@ -314,47 +314,46 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
         print("错误: 未配置 API 地址")
         sys.exit(1)
 
+    sources = image_list or []
     if from_clipboard:
-        image_source = get_clipboard_image()
+        sources = [get_clipboard_image()]
+    elif image_source:
+        sources = [image_source] + sources
+    elif not sources:
+        print("请提供图片路径或使用 -c")
+        sys.exit(1)
 
-    b64, mime = None, None
-    if os.path.isfile(image_source):
-        ext = Path(image_source).suffix.lower()
-        if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"):
-            print(f"不支持的图片格式: {ext}")
-            sys.exit(1)
-        resized = resize_image(image_source, max_size=max_size)
-        b64 = encode_image(resized)
-        if resized != image_source:
-            os.remove(resized)
-        mime_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
-                    ".webp": "image/webp", ".gif": "image/gif", ".bmp": "image/bmp"}
-        mime = mime_map.get(Path(resized).suffix.lower(), "image/jpeg")
-    else:
-        # 已经是 URL 或 base64 data URI
-        img_data = image_source
-        if img_data.startswith("data:"):
-            _, b64data = img_data.split(",", 1)
-            mime = img_data.split(";")[0].split(":")[1]
-            b64 = b64data
+    def load_image(img_path):
+        if os.path.isfile(img_path):
+            ext = Path(img_path).suffix.lower()
+            if ext not in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"):
+                print(f"不支持的图片格式: {ext}")
+                sys.exit(1)
+            resized = resize_image(img_path, max_size=max_size)
+            b = encode_image(resized)
+            if resized != img_path:
+                os.remove(resized)
+            mime_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+                        ".webp": "image/webp", ".gif": "image/gif", ".bmp": "image/bmp"}
+            m = mime_map.get(Path(resized).suffix.lower(), "image/jpeg")
+            return f"data:{m};base64,{b}"
+        if img_path.startswith("data:") or img_path.startswith("http"):
+            return img_path
+        print(f"无效的图片: {img_path}")
+        sys.exit(1)
 
     prompt = load_prompt()
     if query:
         prompt += "\n\n用户问题：" + query
     api_type = detect_api_type(config["api_base"])
 
-    # 构建通用 payload（OpenAI 格式）
     content = [{"type": "text", "text": prompt}]
-    if b64:
-        content.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
-    else:
-        content.append({"type": "image_url", "image_url": {"url": image_source}})
+    for s in sources:
+        content.append({"type": "image_url", "image_url": {"url": load_image(s)}})
 
     payload = {
         "model": config["model"],
-        "messages": [
-            {"role": "user", "content": content}
-        ],
+        "messages": [{"role": "user", "content": content}],
         "max_tokens": 1024,
     }
     if strength is not None:
@@ -440,13 +439,14 @@ if __name__ == "__main__":
             print("API Key: 未设置")
         sys.exit(0)
 
-    img = None
+    images = []
     strength = None
     thinking_effort = None
     max_size = 1024
     clip = False
     stdin_mode = False
     query_parts = []
+    base64_mode = False
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "-t":
@@ -461,21 +461,27 @@ if __name__ == "__main__":
         elif sys.argv[i] == "--stdin":
             stdin_mode = True
         elif sys.argv[i] == "--base64":
-            i += 1
-            b64raw = sys.argv[i] if i < len(sys.argv) else ""
-            if b64raw:
-                img = f"data:image/jpeg;base64,{b64raw}"
+            base64_mode = True
         elif sys.argv[i] in ("--clip", "-c"):
             clip = True
-        elif img is None and not clip:
-            img = sys.argv[i]
+        elif sys.argv[i].startswith("-mcp"):
+            pass
         else:
-            query_parts.append(sys.argv[i])
+            images.append(sys.argv[i])
         i += 1
-    query = " ".join(query_parts) if query_parts else None
-
+    
     if stdin_mode:
-        img = sys.stdin.read().strip()
+        images = [sys.stdin.read().strip()]
+    
+    # 最后一个参数如果不是文件/URL 且 --base64 没启用，当作 query
+    query = None
+    if images and not base64_mode and not clip:
+        last = images[-1]
+        if not os.path.isfile(last) and not last.startswith("data:") and not last.startswith("http"):
+            query = last
+            images = images[:-1]
+    if query_parts:
+        query = " ".join(query_parts)
 
     if sys.argv[1] == "--mcp":
         import mcp_server
@@ -485,8 +491,12 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if clip:
-        describe_image(None, strength, thinking_effort, from_clipboard=True, query=query, max_size=max_size)
-    elif img:
-        describe_image(img, strength, thinking_effort, query=query, max_size=max_size)
+        describe_image(from_clipboard=True, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
+    elif images:
+        if base64_mode and images:
+            uri = f"data:image/jpeg;base64,{images[-1]}"
+            describe_image(image_source=uri, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
+        else:
+            describe_image(image_list=images, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
     else:
         print("请提供图片路径或使用 -c")
