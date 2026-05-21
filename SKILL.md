@@ -30,11 +30,13 @@ read_when:
 
 ## OpenCode 专用规则
 
-OpenCode 粘贴图片时，插件会把图片存为临时文件，消息中显示 `[Image: <路径>]`。看到这个标记就运行：
+OpenCode 粘贴图片后模型不支持直接看图时，引导用户：
 
 ```bash
-openvl <路径> 用户的问题
+openvl -c 用户的问题
 ```
+
+让用户先截图到剪贴板，再运行 `openvl -c`。
 
 ## 安装
 
