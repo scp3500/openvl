@@ -37,13 +37,13 @@ Or screenshot to clipboard and ask:
 openvl -c "what's in this image"
 ```
 
-### 4. Install skills for AI IDE (optional)
+### 4. AI IDE users: install skills
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 ```
 
-This allows AI tools (Pi / Claude Code etc.) to auto-call openvl when they encounter images.
+This allows AI tools (Pi / Claude Code etc.) to auto-call openvl when they encounter images. Non-IDE users can skip this step.
 
 ## Usage
 

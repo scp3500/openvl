@@ -37,13 +37,13 @@ openvl D:\截图.png
 openvl -c "这张图里有什么"
 ```
 
-### 4. 给 AI IDE 装 skills（可选）
+### 4. AI IDE 用户装 skills
 
 ```bash
 git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 ```
 
-这样 AI（Pi / Claude Code 等）遇到图片会自动调 openvl。
+配置后 AI（Pi / Claude Code 等）遇到图片会自动调 openvl。非 IDE 用户可跳过此步。
 
 ## 使用方式
 
