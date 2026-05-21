@@ -49,22 +49,6 @@ VISION_MODEL=模型ID
 
 也支持通过系统环境变量配置。
 
-## 手机端
-
-### 电脑 + RikkaHub（同 WiFi）
-
-电脑跑 `openvl --mcp http`，RikkaHub 连 `http://电脑IP:8932`。
-
-### Termux（手机本地）
-
-```bash
-pkg install nodejs
-npm install -g @scp3500/openvl
-openvl --mcp http
-```
-
-RikkaHub 连 `http://localhost:8932`。
-
 ## 原理
 
 用户发图片 → OpenVL 调用多模态 API → 返回文字描述 → AI 根据描述回复
