@@ -30,7 +30,7 @@ read_when:
 
 ## OpenCode 专用规则
 
-用户粘贴图片后，用 `openvl --stdin 用户的问题` 从管道读 data URI。先用 PowerShell 提取剪贴板图片转 base64 data URI，管道传给 openvl。不要说"模型不支持图片"。
+消息里有 `[Image: <路径>]` 标记时，直接运行 `openvl <路径> 用户的问题`。多个标记就一起传：`openvl <路径1> <路径2> 用户的问题`。不要说"模型不支持图片"。
 
 ## 安装
 
