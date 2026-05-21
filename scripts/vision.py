@@ -448,7 +448,7 @@ if __name__ == "__main__":
             thinking_effort = sys.argv[i] if i < len(sys.argv) else "high"
         elif sys.argv[i] in ("--clip", "-c"):
             clip = True
-        elif img is None:
+        elif img is None and not clip:
             img = sys.argv[i]
         else:
             query_parts.append(sys.argv[i])
