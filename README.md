@@ -66,6 +66,17 @@ VISION_API_BASE=https://你的中转站/v1/chat/completions
 VISION_MODEL=模型ID
 ```
 
+## 各工具集成
+
+| 工具 | 方式 | 详情 |
+|------|------|------|
+| OpenCode | 插件 | 粘贴图片自动转文本 → `openvl --base64`，见 `integrations/opencode/` |
+| Claude Code | skills | 复制 `~/.claude/skills/openvl`，粘贴图片自动读 |
+| Cherry Studio | MCP | `openvl --mcp`，Cherry Studio 里配 MCP 服务器 |
+| Pi | skills | 复制到 `~/.pi/agent/skills/openvl`，已自动生效 |
+
+详见 `integrations/README.md`。
+
 ## 请求拼接逻辑
 
 发送给视觉模型的请求按以下顺序拼接：
