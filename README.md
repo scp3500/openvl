@@ -25,7 +25,8 @@ git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 ```bash
 openvl <图片路径或URL>       # 看图
 openvl -c                    # 从剪贴板读图
-openvl <图片> -t 0.3         # 调推理强度（0~1，越低越严谨）
+openvl <图片> -t 0.3         # 温度（0~1，越低越严谨）
+openvl <图片> -T high        # 思考深度 (low|medium|high)
 openvl -cfg                  # 查看配置
 ```
 

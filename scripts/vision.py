@@ -152,7 +152,7 @@ def encode_image(image_path):
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-def describe_image(image_source, strength=None, from_clipboard=False):
+def describe_image(image_source, strength=None, thinking_effort=None, from_clipboard=False):
     config = load_config()
     if not config["api_key"]:
         print("错误: 未配置 API Key")
@@ -194,6 +194,8 @@ def describe_image(image_source, strength=None, from_clipboard=False):
     }
     if strength is not None:
         payload["temperature"] = strength
+    if thinking_effort is not None:
+        payload["reasoning_effort"] = thinking_effort
 
     headers = {
         "Authorization": f"Bearer {config['api_key']}",
@@ -222,7 +224,8 @@ if __name__ == "__main__":
         print("  看图:")
         print("    openvl <图片路径或URL>       # 从文件或URL看图")
         print("    openvl -c                    # 从剪贴板读图")
-        print("    openvl <图片> -t 0.3         # 调推理强度（0~1，越低越严谨）")
+        print("    openvl <图片> -t 0.3         # 温度（0~1，越低越严谨）")
+        print("    openvl <图片> -T low         # 思考深度 (low|medium|high)")
         print()
         print("  配置:")
         print("    openvl -key <密钥>           # 设置 API Key")
@@ -271,12 +274,16 @@ if __name__ == "__main__":
 
     img = None
     strength = None
+    thinking_effort = None
     clip = False
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "-t":
             i += 1
             strength = float(sys.argv[i]) if i < len(sys.argv) else None
+        elif sys.argv[i] in ("-T", "--think"):
+            i += 1
+            thinking_effort = sys.argv[i] if i < len(sys.argv) else "high"
         elif sys.argv[i] in ("--clip", "-c"):
             clip = True
         else:
@@ -291,8 +298,8 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if clip:
-        describe_image(None, strength, from_clipboard=True)
+        describe_image(None, strength, thinking_effort, from_clipboard=True)
     elif img:
-        describe_image(img, strength)
+        describe_image(img, strength, thinking_effort)
     else:
         print("请提供图片路径或使用 -c")

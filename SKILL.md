@@ -25,7 +25,8 @@ npm install -g @scp3500/openvl
 ```bash
 openvl <路径/URL>      # 看图
 openvl -c               # 读剪贴板截图
-openvl <图片> -t 0.3    # 调推理强度（0~1，越低越严谨）
+openvl <图片> -t 0.3    # 温度（0~1，越低越严谨）
+openvl <图片> -T high   # 思考深度 (low|medium|high)
 ```
 
 ## 配置
