@@ -339,12 +339,11 @@ def describe_image(image_source, strength=None, thinking_effort=None, from_clipb
     api_type = detect_api_type(config["api_base"])
 
     # 构建通用 payload（OpenAI 格式）
-    content = []
+    content = [{"type": "text", "text": prompt}]
     if b64:
         content.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64,{b64}"}})
     else:
         content.append({"type": "image_url", "image_url": {"url": image_source}})
-    content.append({"type": "text", "text": prompt})
 
     payload = {
         "model": config["model"],
