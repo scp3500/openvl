@@ -405,6 +405,48 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
         print(f"请求出错: {e}")
         sys.exit(1)
 
+def doctor():
+    ok = True
+    def chk(name, status, detail=""):
+        nonlocal ok
+        mark = "\u2713" if status else "\u2717"
+        if not status: ok = False
+        print(f"  {mark} {name} {detail}")
+    print(f"OpenVL v{OPENVL_VERSION} \u8bca\u65ad")
+    print()
+    chk("Python", True, sys.version.split()[0])
+    try: import requests; chk("requests", True, requests.__version__)
+    except: chk("requests", False, "\u672a\u5b89\u88c5")
+    try: from PIL import Image; chk("Pillow", True, Image.__version__)
+    except: chk("Pillow", False, "\u672a\u5b89\u88c5\uff08\u53ef\u9009\uff09")
+    chk("\u914d\u7f6e\u6587\u4ef6", ENV_FILE.exists(), str(ENV_FILE))
+    c = load_config()
+    chk("API Key", bool(c["api_key"]), "\u5df2\u8bbe\u7f6e" if c["api_key"] else "\u672a\u8bbe\u7f6e")
+    chk("API \u5730\u5740", bool(c["api_base"]), c["api_base"] if c["api_base"] else "\u672a\u8bbe\u7f6e")
+    chk("\u6a21\u578b", bool(c["model"]), c["model"] if c["model"] else "\u672a\u8bbe\u7f6e")
+    if c["api_key"] and c["api_base"]:
+        try:
+            r = requests.post(c['api_base'].rstrip('/'), json={"model": c['model'] or "test", "messages":[{"role":"user","content":"hi"}], "max_tokens":1, "stream":False}, headers={"Authorization": f"Bearer {c['api_key']}", "Content-Type": "application/json"}, timeout=8)
+            ok_api = r.status_code in (200, 400, 422, 429)
+            msg = f"{r.status_code}" if r.status_code != 200 else "\u6b63\u5e38"
+            if r.status_code == 400:
+                try:
+                    e = r.json().get('error',{}).get('message','') or r.json().get('message','')
+                    msg = f"400 ({e[:40]})" if e else "400 (\u53ef\u8fbe)"
+                except: msg = "400 (\u53ef\u8fbe)"
+            chk("API \u8fde\u901a", ok_api, msg)
+        except Exception as e:
+            chk("API \u8fde\u901a", False, str(e)[:50])
+    else:
+        chk("API \u8fde\u901a", False, "\u8df3\u8fc7")
+    print()
+    if ok:
+        print("  \u4e00\u5207\u6b63\u5e38\uff0c\u53ef\u4ee5\u770b\u56fe\u4e86\u3002")
+    else:
+        print("  \u6709\u95ee\u9898\u9700\u8981\u4fee\u590d\uff0c\u89c1\u4e0a\u65b9 \u2717 \u6807\u8bb0\u3002")
+    sys.exit(0 if ok else 1)
+
+
 def setup():
     """交互式配置向导"""
     print("OpenVL 配置向导")
@@ -504,8 +546,6 @@ def setup():
     
     print()
     print("=")
-    """诊断工具：检查环境配置"""
-    ok = True
     def check(name, status, detail=""):
         nonlocal ok
         mark = "✓" if status else "✗"
