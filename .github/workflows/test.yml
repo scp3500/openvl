@@ -3,7 +3,7 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  test:
+  python:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -11,53 +11,75 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
+        with: { python-version: ${{ matrix.python-version }} }
+      - name: Install deps
         run: pip install requests pillow
 
-      - name: Python syntax check
-        run: python -c "compile(open('scripts/vision.py').read(),'test','exec'); print('vision.py OK')"
+      - name: Syntax check
+        run: python -c "compile(open('scripts/vision.py').read(),'test','exec'); print('OK')"
 
       - name: --help
         run: python scripts/vision.py --help
-
-      - name: --version
+      - name: -v
         run: python scripts/vision.py -v
 
-      - name: doctor (without API key)
+      - name: doctor (no key)
         run: python scripts/vision.py doctor 2>&1
-        continue-on-error: true
 
-      - name: doctor (with API key)
-        if: ${{ secrets.API_KEY != '' }}
+      - name: doctor (with key)
+        if: secrets.API_KEY != ''
         env:
           VISION_API_KEY: ${{ secrets.API_KEY }}
           VISION_API_BASE: ${{ secrets.API_BASE || 'https://api.deepseek.com/v1/chat/completions' }}
           VISION_MODEL: ${{ secrets.MODEL || 'deepseek-v4-flash' }}
         run: python scripts/vision.py doctor
 
+      - name: Test with test image
+        run: |
+          python -c "
+          import base64
+          # 1x1 red PNG
+          b=base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode()
+          with open('test.png','wb') as f: f.write(base64.b64decode(b))
+          "
+          python scripts/vision.py test.png 2>&1 | head -5
+        env:
+          VISION_API_KEY: ${{ secrets.API_KEY || '' }}
+          VISION_API_BASE: ${{ secrets.API_BASE || '' }}
+        continue-on-error: true
+
+      - name: Test invalid image
+        run: python scripts/vision.py not_exists.png 2>&1
+
+      - name: Test --base64 flag
+        run: python scripts/vision.py --base64 "$(python -c "import base64; b=base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode(); print(b)")" "test color" 2>&1 | head -5
+        continue-on-error: true
+
+      - name: Test --stdin
+        run: python -c "import base64; print('data:image/png;base64,'+base64.b64encode(bytes([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,0xDE,0x00,0x00,0x00,0x0C,0x49,0x44,0x41,0x54,0x08,0xD7,0x63,0x60,0x60,0x60,0x00,0x00,0x00,0x04,0x00,0x01,0x27,0x34,0x27,0x0E,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82])).decode())" | python scripts/vision.py --stdin 2>&1 | head -5
+        continue-on-error: true
+
+      - name: Test multi-image
+        run: |
+          python -c "import base64; open('t1.png','wb').write(base64.b64decode(base64.b64encode(bytes([0x89,0x50,0x4E,0x47]))))" 2>/dev/null
+          python scripts/vision.py t1.png t1.png 2>&1 | head -5
+        continue-on-error: true
+
+      - name: Test doctor with config
+        run: |
+          mkdir -p .pi/agent/skills/openvl
+          echo 'VISION_API_KEY=test-key' > .pi/agent/skills/openvl/config.env
+          python scripts/vision.py doctor 2>&1
+
   node:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Node syntax check
-        run: node --check bin/openvl
-
-      - name: MCP server starts
-        run: |
-          echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | timeout 5 node scripts/mcp_server.js 2>/dev/null | head -5
-
-      - name: ESLint
-        run: |
-          npm init -y
-          npm install eslint -D
-          npx eslint scripts/mcp_server.js --no-ignore 2>&1 || true
+        with: { node-version: 20 }
+      - name: Syntax check
+        run: node --check bin/openvl && node --check scripts/mcp_server.js
+      - name: MCP tools/list
+        run: echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | timeout 5 node scripts/mcp_server.js 2>/dev/null | python -c "import sys,json;d=json.loads(sys.stdin.read());assert len(d['result']['tools'])==2; print('MCP OK:',[t['name'] for t in d['result']['tools']])"
