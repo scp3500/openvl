@@ -328,7 +328,7 @@ def call_chat(api_url, api_key, payload):
                     pass
     print()
 
-def describe_image(image_source=None, strength=None, thinking_effort=None, from_clipboard=False, query=None, max_size=1024, image_list=None):
+def describe_image(image_source=None, strength=None, thinking_effort=None, from_clipboard=False, query=None, max_size=1024, image_list=None, use_default_prompt=True):
     config = load_config()
     if not config["api_key"]:
         print("错误: 未配置 API Key")
@@ -379,9 +379,12 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
         print(f"无效的图片: {img_path}")
         sys.exit(1)
 
-    prompt = load_prompt()
+    prompt = load_prompt() if use_default_prompt else ""
     if query:
-        prompt += "\n\n用户问题：" + query
+        if use_default_prompt:
+            prompt += "\n\n用户问题：" + query
+        else:
+            prompt = query
     api_type = detect_api_type(config["api_base"])
 
     content = [{"type": "text", "text": prompt}]
@@ -689,6 +692,7 @@ if __name__ == "__main__":
     clip = False
     stdin_mode = False
     base64_mode = False
+    no_default_prompt = False
     i = 1
     while i < len(sys.argv):
         if sys.argv[i] == "-t":
@@ -706,6 +710,8 @@ if __name__ == "__main__":
             base64_mode = True
         elif sys.argv[i] in ("--clip", "-c"):
             clip = True
+        elif sys.argv[i] == "-P":
+            no_default_prompt = True
         elif sys.argv[i].startswith("-mcp"):
             pass
         else:
@@ -731,12 +737,12 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if clip:
-        describe_image(from_clipboard=True, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
+        describe_image(from_clipboard=True, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt)
     elif images:
         if base64_mode:
             uri = f"data:image/jpeg;base64,{images[-1]}"
-            describe_image(image_source=uri, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
+            describe_image(image_source=uri, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt)
         else:
-            describe_image(image_list=images, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size)
+            describe_image(image_list=images, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt)
     else:
         print("请提供图片路径或使用 -c")
