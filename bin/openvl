@@ -10,7 +10,7 @@ const args = process.argv.slice(2);
 
 function findPython() {
     if (process.env.OPENVL_PYTHON) return process.env.OPENVL_PYTHON;
-    
+
     // 快速检测 PATH 中的 Python
     const tryRun = (cmd) => {
         try {
@@ -18,10 +18,10 @@ function findPython() {
             return r.status === 0 ? cmd : null;
         } catch (e) { return null; }
     };
-    
+
     let found = tryRun('python3') || tryRun('python');
     if (found) return found;
-    
+
     // Windows 上扫描常见安装路径
     if (process.platform === 'win32') {
         const home = process.env.USERPROFILE || '';
@@ -42,8 +42,13 @@ function findPython() {
             } catch (e) {}
         }
     }
-    
+
     return 'python';
+}
+
+// 供 mcp_server / 外部脚本复用（保持与 CLI 同一套发现逻辑）
+if (require.main !== module) {
+    module.exports = { findPython };
 }
 
 function run() {

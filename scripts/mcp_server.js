@@ -1,15 +1,53 @@
 #!/usr/bin/env node
 /**
- * OpenVL MCP Server - 纯 Node.js
+ * OpenVL MCP Server - 薄封装，实际看图走 vision.py
  */
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const { spawnSync } = require('child_process');
 
+function log(m) { process.stderr.write('[OpenVL] ' + m + '\n'); }
+
 const PKG_DIR = path.join(__dirname, '..');
 const HOME = process.env.USERPROFILE || process.env.HOME || '';
 const SKILL_DIR = path.join(HOME, '.pi', 'agent', 'skills', 'openvl');
+const VISION_PY = path.join(PKG_DIR, 'scripts', 'vision.py');
+
+function findPython() {
+    if (process.env.OPENVL_PYTHON) return process.env.OPENVL_PYTHON;
+
+    const tryRun = (cmd) => {
+        try {
+            const r = spawnSync(cmd, ['--version'], { encoding: 'utf8', timeout: 2000 });
+            return r.status === 0 ? cmd : null;
+        } catch (e) { return null; }
+    };
+
+    let found = tryRun('python3') || tryRun('python');
+    if (found) return found;
+
+    if (process.platform === 'win32') {
+        const home = process.env.USERPROFILE || '';
+        const candidates = [
+            path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Python'),
+            path.join(home, 'AppData', 'Local', 'Programs', 'Python'),
+            path.join(home, '.local', 'bin'),
+        ];
+        for (const dir of candidates) {
+            try {
+                if (fs.existsSync(dir)) {
+                    const items = fs.readdirSync(dir);
+                    for (const item of items.sort().reverse()) {
+                        const py = path.join(dir, item, 'python.exe');
+                        if (fs.existsSync(py)) return py;
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+    return 'python';
+}
 
 // 优先查找用户 skills 目录，再找 npm 包目录
 function findConfig() {
@@ -22,109 +60,73 @@ function findConfig() {
     }
     return paths[0];
 }
-function findPrompt() {
-    const paths = [
-        path.join(SKILL_DIR, 'prompts', 'describe.md'),
-        path.join(PKG_DIR, 'prompts', 'describe.md'),
-    ];
-    for (const p of paths) {
-        if (fs.existsSync(p)) return p;
-    }
-    return paths[0];
-}
 
 const CONFIG = findConfig();
 log('配置来源: ' + CONFIG);
-const PROMPT_FILE = findPrompt();
 const MODE = process.env.OPENVL_MCP_MODE || 'stdio';
-const PORT = parseInt(process.env.OPENVL_MCP_PORT || '8932');
-
-function log(m) { process.stderr.write('[OpenVL] ' + m + '\n'); }
+const PORT = parseInt(process.env.OPENVL_MCP_PORT || '8932', 10);
+const PYTHON = findPython();
+log('Python: ' + PYTHON);
 
 function loadConfig() {
-    // 优先级：环境变量 > 配置文件
+    // 优先级：环境变量 > 配置文件（文件只填空）
     const cfg = { apiKey: '', apiBase: '', model: '' };
-    
-    // 1. 读环境变量（可在 Cherry Studio MCP 配置的环境变量栏设置）
+
     if (process.env.VISION_API_KEY && !process.env.VISION_API_KEY.includes('你的'))
         cfg.apiKey = process.env.VISION_API_KEY;
     if (process.env.VISION_API_BASE)
         cfg.apiBase = process.env.VISION_API_BASE.replace(/\/+$/, '');
     if (process.env.VISION_MODEL)
         cfg.model = process.env.VISION_MODEL;
-    
-    log('API Key 状态: ' + (cfg.apiKey ? '已设置 (' + cfg.apiKey.substring(0,8) + '...)' : '未设置'));
-    log('API Base: ' + cfg.apiBase);
-    log('Model: ' + cfg.model);
-    
-    // 2. 环境变量不够则读配置文件
-    if (!cfg.apiKey) {
+
+    if (!cfg.apiKey || !cfg.apiBase || !cfg.model) {
         try {
             const text = fs.readFileSync(CONFIG, 'utf8');
             for (const line of text.split('\n')) {
                 const s = line.trim();
-                if (s.startsWith('VISION_API_KEY=') && !s.includes('你的'))
-                    cfg.apiKey = s.split('=')[1].trim();
-                else if (s.startsWith('VISION_API_BASE='))
-                    cfg.apiBase = s.split('=')[1].trim().replace(/\/+$/, '');
-                else if (s.startsWith('VISION_MODEL='))
-                    cfg.model = s.split('=')[1].trim();
+                if (s.startsWith('VISION_API_KEY=') && !s.includes('你的')) {
+                    if (!cfg.apiKey) cfg.apiKey = s.split('=').slice(1).join('=').trim();
+                } else if (s.startsWith('VISION_API_BASE=')) {
+                    if (!cfg.apiBase) cfg.apiBase = s.split('=').slice(1).join('=').trim().replace(/\/+$/, '');
+                } else if (s.startsWith('VISION_MODEL=')) {
+                    if (!cfg.model) cfg.model = s.split('=').slice(1).join('=').trim();
+                }
             }
         } catch (e) {}
     }
+
+    log('API Key: ' + (cfg.apiKey ? '已设置' : '未设置'));
+    log('API Base: ' + (cfg.apiBase || '(空)'));
+    log('Model: ' + (cfg.model || '(空)'));
     return cfg;
-}
-
-function loadPrompt() {
-    try { return fs.readFileSync(PROMPT_FILE, 'utf8').trim(); }
-    catch (e) { return '请用中文详细描述这张图片的内容'; }
-}
-
-function getImageData(source) {
-    if (source.startsWith('data:') || source.startsWith('http://') || source.startsWith('https://'))
-        return source;
-    const data = fs.readFileSync(source);
-    const ext = path.extname(source).toLowerCase();
-    const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
-                      '.gif': 'image/gif', '.webp': 'image/webp', '.bmp': 'image/bmp' };
-    return `data:${mimeMap[ext] || 'image/jpeg'};base64,${data.toString('base64')}`;
-}
-
-// 剪贴板：尝试用 PowerShell 读取
-function getClipboardImage() {
-    const cp = require('child_process');
-    const ps = `Add-Type -AssemblyName System.Windows.Forms
-$img = [Windows.Forms.Clipboard]::GetImage()
-if ($img -eq $null) { exit 1 }
-$path = [System.IO.Path]::GetTempPath() + 'openvl_clip.png'
-$img.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
-Write-Host $path`;
-    const result = cp.spawnSync('powershell', ['-NoProfile', '-Command', ps], { timeout: 10000, encoding: 'utf8' });
-    if (result.status !== 0) throw new Error('剪贴板无图片');
-    const imgPath = result.stdout.trim();
-    if (!imgPath || !fs.existsSync(imgPath)) throw new Error('读取失败');
-    return imgPath;
 }
 
 async function callAPI(imageSource, fromClipboard, opts = {}) {
     const config = loadConfig();
     if (!config.apiKey || config.apiKey.includes('你的'))
-        throw new Error('请配置 API Key: npx @scp3500/openvl openvl --set-key sk-xxx');
+        throw new Error('请配置 API Key: openvl -key sk-xxx');
 
-    const VISION_PY = path.join(PKG_DIR, 'scripts', 'vision.py');
     const args = [];
     if (fromClipboard) args.push('-c');
     if (imageSource && !fromClipboard) args.push(imageSource);
     if (opts.query) args.push(opts.query);
     if (opts.size) args.push('-s', String(opts.size));
     if (opts.thinking) args.push('-T', opts.thinking);
-    
-    const result = spawnSync('python', [VISION_PY, ...args], {
+
+    const result = spawnSync(PYTHON, [VISION_PY, ...args], {
         encoding: 'utf8',
         timeout: 90000,
-        env: { ...process.env, VISION_API_KEY: config.apiKey, VISION_API_BASE: config.apiBase, VISION_MODEL: config.model }
+        env: {
+            ...process.env,
+            VISION_API_KEY: config.apiKey,
+            VISION_API_BASE: config.apiBase,
+            VISION_MODEL: config.model
+        }
     });
-    
+
+    if (result.error) {
+        throw new Error('启动 Python 失败: ' + result.error.message);
+    }
     if (result.status !== 0) {
         throw new Error((result.stderr || result.stdout || '调用失败').slice(0, 300));
     }
@@ -144,7 +146,7 @@ async function handleToolsCall(toolName, args) {
     if (args.query) opts.query = args.query;
     if (args.size) opts.size = args.size;
     if (args.thinking) opts.thinking = args.thinking;
-    
+
     if (toolName === 'describe_image') {
         if (!args.source) throw new Error('请提供图片路径');
         return await callAPI(args.source, false, opts);

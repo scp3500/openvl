@@ -94,8 +94,8 @@ def set_config(key, value):
 
 def load_config():
     config = {"api_key": "", "api_base": "", "model": ""}
-    
-    # 优先级：环境变量 > 配置文件
+
+    # 优先级：环境变量 > 配置文件（文件只填空，不覆盖 env）
     env_key = os.environ.get("VISION_API_KEY", "")
     if env_key and "你的" not in env_key:
         config["api_key"] = env_key
@@ -105,14 +105,13 @@ def load_config():
     env_model = os.environ.get("VISION_MODEL", "")
     if env_model:
         config["model"] = env_model
-    
-    # 环境变量不够则读配置文件
+
     config_files = [ENV_FILE]
     if HOME_DIR and HOME_DIR != SKILL_DIR:
         config_files.append(HOME_DIR / "config.env")
     if HOME_DIR2 and HOME_DIR2 != SKILL_DIR and HOME_DIR2 != HOME_DIR:
         config_files.append(HOME_DIR2 / "config.env")
-    
+
     for cfg_file in config_files:
         if not cfg_file.exists():
             continue
@@ -120,11 +119,14 @@ def load_config():
             for line in f:
                 line = line.strip()
                 if line.startswith("VISION_API_KEY=") and "你的" not in line:
-                    config["api_key"] = line.split("=", 1)[1].strip()
+                    if not config["api_key"]:
+                        config["api_key"] = line.split("=", 1)[1].strip()
                 elif line.startswith("VISION_API_BASE="):
-                    config["api_base"] = line.split("=", 1)[1].strip().rstrip("/")
+                    if not config["api_base"]:
+                        config["api_base"] = line.split("=", 1)[1].strip().rstrip("/")
                 elif line.startswith("VISION_MODEL="):
-                    config["model"] = line.split("=", 1)[1].strip()
+                    if not config["model"]:
+                        config["model"] = line.split("=", 1)[1].strip()
     return config
 
 def load_prompt():
@@ -158,6 +160,7 @@ Write-Host $path
 
 def resize_image(image_path, max_size=1024):
     try:
+        import tempfile
         from PIL import Image, ImageFile
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         img = Image.open(image_path)
@@ -168,10 +171,14 @@ def resize_image(image_path, max_size=1024):
             img = img.resize(new_size, Image.LANCZOS)
             ext = Path(image_path).suffix.lower()
             fmt = "JPEG" if ext in (".jpg", ".jpeg") else "PNG"
-            buf = Path(image_path).parent / f".tmp_vision_{Path(image_path).name}"
-            img.save(buf, fmt, quality=85)
-            return str(buf)
+            suffix = ".jpg" if fmt == "JPEG" else ".png"
+            fd, tmp = tempfile.mkstemp(prefix="openvl_", suffix=suffix)
+            os.close(fd)
+            img.save(tmp, fmt, quality=85)
+            return tmp
     except ImportError:
+        pass
+    except Exception:
         pass
     return image_path
 
@@ -354,14 +361,21 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
                 print(f"不支持的图片格式: {ext}")
                 sys.exit(1)
             resized = resize_image(img_path, max_size=max_size)
-            b = encode_image(resized)
-            if resized != img_path:
-                os.remove(resized)
-            mime_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
-                        ".webp": "image/webp", ".gif": "image/gif", ".bmp": "image/bmp"}
-            m = mime_map.get(Path(resized).suffix.lower(), "image/jpeg")
-            return f"data:{m};base64,{b}"
-        if img_path.startswith("data:") or img_path.startswith("http"):
+            try:
+                b = encode_image(resized)
+                mime_map = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+                            ".webp": "image/webp", ".gif": "image/gif", ".bmp": "image/bmp"}
+                m = mime_map.get(Path(resized).suffix.lower(), "image/jpeg")
+                return f"data:{m};base64,{b}"
+            finally:
+                if resized != img_path:
+                    try:
+                        os.remove(resized)
+                    except OSError:
+                        pass
+        if img_path.startswith("data:"):
+            return img_path
+        if img_path.startswith("http://") or img_path.startswith("https://"):
             # 部分图站需要代理或 Referer
             dl_url = img_path
             headers = {}
@@ -370,12 +384,15 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
                 dl_url = img_path.replace("i.pximg.net", "i.pixiv.cat")
             try:
                 r = requests.get(dl_url, headers=headers, timeout=15)
-                if r.ok:
-                    ct = r.headers.get("content-type", "image/jpeg")
-                    b64 = base64.b64encode(r.content).decode()
-                    return f"data:{ct};base64,{b64}"
-            except: pass
-            return img_path
+            except requests.exceptions.RequestException as e:
+                print(f"下载图片失败: {e}")
+                sys.exit(1)
+            if not r.ok:
+                print(f"下载图片失败 ({r.status_code}): {img_path}")
+                sys.exit(1)
+            ct = r.headers.get("content-type", "image/jpeg").split(";")[0].strip() or "image/jpeg"
+            b64 = base64.b64encode(r.content).decode()
+            return f"data:{ct};base64,{b64}"
         print(f"无效的图片: {img_path}")
         sys.exit(1)
 
@@ -559,66 +576,11 @@ def setup():
         model = input("输入模型名（如 deepseek-v4-flash）: ").strip()
     if model and model != current_model:
         set_config("model", model)
-    
+
     print()
-    print("=")
-    def check(name, status, detail=""):
-        nonlocal ok
-        mark = "✓" if status else "✗"
-        if not status: ok = False
-        print(f"  {mark} {name} {detail}")
-    
-    print(f"OpenVL v{OPENVL_VERSION} 诊断")
+    print("配置完成。")
     print()
-    
-    # Python
-    check("Python", True, sys.version.split()[0])
-    
-    # 依赖
-    try: import requests; check("requests", True, requests.__version__)
-    except: check("requests", False, "未安装，请运行 pip install requests")
-    try: from PIL import Image; check("Pillow", True, Image.__version__)
-    except: check("Pillow", False, "未安装，请运行 pip install pillow（可选，用于缩放）")
-    
-    # 配置文件
-    cfg_exists = ENV_FILE.exists()
-    check("配置文件", cfg_exists, str(ENV_FILE) if cfg_exists else "未找到")
-    
-    # API 配置
-    cfg = load_config()
-    has_key = bool(cfg["api_key"])
-    has_base = bool(cfg["api_base"])
-    check("API Key", has_key, "已设置" if has_key else "未设置")
-    check("API 地址", has_base, cfg["api_base"] if has_base else "未设置")
-    check("模型", bool(cfg["model"]), cfg["model"] if cfg["model"] else "未设置")
-    
-    # API 连通性
-    if has_key and has_base:
-        try:
-            r = requests.post(cfg['api_base'].rstrip('/'),
-                json={"model": cfg['model'] or "test", "messages":[{"role":"user","content":"hi"}], "max_tokens":1, "stream":False},
-                headers={"Authorization": f"Bearer {cfg['api_key']}", "Content-Type": "application/json"},
-                timeout=8)
-            ok = r.status_code in (200, 400, 422, 429)
-            msg = f"{r.status_code}" if r.status_code != 200 else "正常"
-            if r.status_code == 400:
-                try:
-                    err = r.json()
-                    m = err.get('error',{}).get('message','') or err.get('message','')
-                    msg = f"400 ({m[:40]})" if m else "400 (请求格式有误，但服务可达)"
-                except: msg = "400 (服务可达)"
-            check("API 连通", ok, msg)
-        except Exception as e:
-            check("API 连通", False, str(e)[:50])
-    else:
-        check("API 连通", False, "跳过（Key 或地址未配置）")
-    
-    print()
-    if ok:
-        print("  一切正常，可以看图了。")
-    else:
-        print("  有问题需要修复，见上方 ✗ 标记。")
-    sys.exit(0 if ok else 1)
+    doctor()
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] in ("--setup", "setup"):
@@ -722,8 +684,9 @@ if __name__ == "__main__":
         images = [sys.stdin.read().strip()]
     
     # 从 images 中分离 query：最后一个参数如果不是文件/URL/data URI 当作问题
+    # clip 模式也要支持：openvl -c "这张图是什么"
     query = None
-    if images and not base64_mode and not clip:
+    if images and not base64_mode:
         last = images[-1]
         if not os.path.isfile(last) and not last.startswith(("data:", "http://", "https://")):
             query = images.pop()
