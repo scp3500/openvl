@@ -139,6 +139,16 @@ prompts/describe.md(固定提示词) → 用户问题 → 图片数据
 | `scripts/mcp_server.js` | MCP 服务器 |
 | `prompts/describe.md` | 描述提示词模板 |
 | `SKILL.md` | AI 技能定义 |
+| `tests/test_openvl.py` | 本地单元/冒烟测试 |
+
+## 测试
+
+```bash
+npm test                  # 或: python -X utf8 tests/test_openvl.py
+npm run test:e2e          # 额外打真实 API（需已配置）
+```
+
+默认不访问真实视觉 API；`--e2e` 才会看图验证。
 
 ## 许可证
 

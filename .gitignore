@@ -3,3 +3,6 @@ vision_history.json
 __pycache__/
 *.pyc
 .tmp_vision_*
+.pytest_cache/
+.coverage
+htmlcov/
