@@ -150,6 +150,11 @@ npm run test:e2e          # 额外打真实 API（需已配置）
 
 默认不访问真实视觉 API；`--e2e` 才会看图验证。
 
+## 开发与多副本说明
+
+本地可能同时存在 git 工作区、Pi/Claude skill 目录、全局 npm 包等多份路径。  
+**维护者请读 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**：真相源、同步方式、配置优先级、发版清单。
+
 ## 许可证
 
 MIT
