@@ -51,6 +51,10 @@ if sys.platform == "win32":
     except:
         pass
 
+DEFAULT_MAX_TOKENS = 16384
+API_TIMEOUT = 180
+
+
 def set_config(key, value):
     """写入配置项到 config.env"""
     config = load_config()
@@ -60,6 +64,12 @@ def set_config(key, value):
         config["api_base"] = value
     elif key == "model":
         config["model"] = value
+    elif key == "max_tokens":
+        try:
+            config["max_tokens"] = int(value)
+        except (TypeError, ValueError):
+            print(f"无效的 max_tokens: {value}")
+            sys.exit(1)
     else:
         print(f"未知配置项: {key}")
         sys.exit(1)
@@ -79,6 +89,9 @@ def set_config(key, value):
                 elif line_stripped.startswith("VISION_MODEL="):
                     lines.append(f"VISION_MODEL={config['model']}\n")
                     written.add("model")
+                elif line_stripped.startswith("VISION_MAX_TOKENS="):
+                    lines.append(f"VISION_MAX_TOKENS={config['max_tokens']}\n")
+                    written.add("max_tokens")
                 else:
                     lines.append(line)
     if "key" not in written:
@@ -87,13 +100,15 @@ def set_config(key, value):
         lines.append(f"VISION_API_BASE={config['api_base']}\n")
     if "model" not in written:
         lines.append(f"VISION_MODEL={config['model']}\n")
+    if "max_tokens" not in written and key == "max_tokens":
+        lines.append(f"VISION_MAX_TOKENS={config['max_tokens']}\n")
     with open(ENV_FILE, "w", encoding="utf-8") as f:
         f.writelines(lines)
     print(f"已设置: {key}={value}")
 
 
 def load_config():
-    config = {"api_key": "", "api_base": "", "model": ""}
+    config = {"api_key": "", "api_base": "", "model": "", "max_tokens": None}
 
     # 优先级：环境变量 > 配置文件（文件只填空，不覆盖 env）
     env_key = os.environ.get("VISION_API_KEY", "")
@@ -105,6 +120,12 @@ def load_config():
     env_model = os.environ.get("VISION_MODEL", "")
     if env_model:
         config["model"] = env_model
+    env_max = os.environ.get("VISION_MAX_TOKENS", "")
+    if env_max:
+        try:
+            config["max_tokens"] = int(env_max)
+        except ValueError:
+            pass
 
     config_files = [ENV_FILE]
     if HOME_DIR and HOME_DIR != SKILL_DIR:
@@ -127,6 +148,14 @@ def load_config():
                 elif line.startswith("VISION_MODEL="):
                     if not config["model"]:
                         config["model"] = line.split("=", 1)[1].strip()
+                elif line.startswith("VISION_MAX_TOKENS="):
+                    if config["max_tokens"] is None:
+                        try:
+                            config["max_tokens"] = int(line.split("=", 1)[1].strip())
+                        except ValueError:
+                            pass
+    if config["max_tokens"] is None:
+        config["max_tokens"] = DEFAULT_MAX_TOKENS
     return config
 
 def load_prompt():
@@ -188,25 +217,46 @@ def encode_image(image_path):
 
 def detect_api_type(url):
     """根据 URL 自动识别 API 类型"""
-    url = url.lower()
-    if "googleapis.com" in url or "generativelanguage" in url:
+    url = (url or "").lower()
+    if "googleapis.com" in url or "generativelanguage" in url or "streamgeneratecontent" in url or "generatecontent" in url:
         return "gemini"
-    if "api.anthropic.com" in url:
-        return "claude"
+    if "api.anthropic.com" in url or url.rstrip("/").endswith("/messages") or "/v1/messages" in url:
+        # 仅当明确 anthropic 或 messages 路径时；中转站 /messages 也可能是 chat，优先 anthropic 域名
+        if "anthropic" in url or "/v1/messages" in url:
+            return "claude"
     if "/responses" in url:
         return "responses"
     return "chat"
 
+
+def _fail_http(resp):
+    print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
+    sys.exit(1)
+
+
+def _iter_sse_lines(resp):
+    for line in resp.iter_lines():
+        if not line:
+            continue
+        yield line.decode("utf-8", errors="replace")
+
+
 def call_gemini(api_url, api_key, payload):
-    """调用 Google Gemini API"""
-    model = payload.pop("model", "")
-    token = payload.pop("max_tokens", 1024)
-    temp = payload.pop("temperature", None)
+    """调用 Google Gemini API（SSE 流式）"""
+    model = payload.get("model", "")
+    token = payload.get("max_tokens", DEFAULT_MAX_TOKENS)
+    temp = payload.get("temperature", None)
 
     url = api_url.rstrip("/")
-    if "generateContent" not in url:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    url += f"?key={api_key}"
+    if "generateContent" not in url and "streamGenerateContent" not in url:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent"
+    else:
+        url = url.replace(":generateContent", ":streamGenerateContent")
+    if "key=" not in url:
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}key={api_key}"
+    if "alt=sse" not in url:
+        url += "&alt=sse" if "?" in url else "?alt=sse"
 
     content = []
     for msg in payload.get("messages", []):
@@ -226,20 +276,35 @@ def call_gemini(api_url, api_key, payload):
     if temp is not None:
         body["generationConfig"]["temperature"] = temp
 
-    resp = requests.post(url, json=body, timeout=60)
+    resp = requests.post(url, json=body, stream=True, timeout=API_TIMEOUT)
     if resp.status_code != 200:
-        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
-        sys.exit(1)
-    result = resp.json()
-    try:
-        print(result["candidates"][0]["content"]["parts"][0]["text"])
-    except (KeyError, IndexError):
-        print(result)
+        _fail_http(resp)
+
+    for line in _iter_sse_lines(resp):
+        if not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if not data or data == "[DONE]":
+            continue
+        try:
+            chunk = json.loads(data)
+            cands = chunk.get("candidates") or []
+            if not cands:
+                continue
+            parts = (cands[0].get("content") or {}).get("parts") or []
+            for p in parts:
+                text = p.get("text")
+                if text:
+                    print(text, end="", flush=True)
+        except json.JSONDecodeError:
+            pass
+    print()
+
 
 def call_claude(api_url, api_key, payload):
-    """调用 Claude API"""
+    """调用 Claude API（SSE 流式）"""
     model = payload.get("model", "")
-    token = payload.get("max_tokens", 1024)
+    token = payload.get("max_tokens", DEFAULT_MAX_TOKENS)
     temp = payload.get("temperature")
 
     content = []
@@ -256,28 +321,48 @@ def call_claude(api_url, api_key, payload):
                 parts.append({"type": "text", "text": item["text"]})
         content.append({"role": "user", "content": parts})
 
-    body = {"model": model, "max_tokens": token, "messages": content}
+    body = {"model": model, "max_tokens": token, "messages": content, "stream": True}
     if temp is not None:
         body["temperature"] = temp
 
-    headers = {"x-api-key": api_key, "anthropic-version": "2023-06-01", "Content-Type": "application/json"}
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+    }
 
     url = api_url.rstrip("/")
     if "/messages" not in url:
         url = "https://api.anthropic.com/v1/messages"
 
-    resp = requests.post(url, headers=headers, json=body, timeout=60)
+    resp = requests.post(url, headers=headers, json=body, stream=True, timeout=API_TIMEOUT)
     if resp.status_code != 200:
-        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
-        sys.exit(1)
-    result = resp.json()
-    try:
-        print(result["content"][0]["text"])
-    except (KeyError, IndexError):
-        print(result)
+        _fail_http(resp)
+
+    for line in _iter_sse_lines(resp):
+        if not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if not data or data == "[DONE]":
+            continue
+        try:
+            chunk = json.loads(data)
+            if chunk.get("type") == "content_block_delta":
+                delta = chunk.get("delta") or {}
+                text = delta.get("text", "")
+                if text:
+                    print(text, end="", flush=True)
+            elif chunk.get("type") == "error":
+                err = chunk.get("error") or chunk
+                print(f"\nAPI 流式错误: {err}")
+                sys.exit(1)
+        except json.JSONDecodeError:
+            pass
+    print()
+
 
 def call_responses(api_url, api_key, payload):
-    """调用 OpenAI Responses API"""
+    """调用 OpenAI Responses API（流式）"""
     input_items = []
     for msg in payload.get("messages", []):
         content_blocks = []
@@ -288,54 +373,61 @@ def call_responses(api_url, api_key, payload):
                 content_blocks.append({"type": "input_text", "text": item["text"]})
         input_items.append({"role": msg.get("role", "user"), "content": content_blocks})
 
-    body = {"model": payload["model"], "input": input_items, "max_output_tokens": 1024, "stream": True}
-    if payload.get("temperature"):
+    max_tokens = payload.get("max_tokens", DEFAULT_MAX_TOKENS)
+    body = {
+        "model": payload["model"],
+        "input": input_items,
+        "max_output_tokens": max_tokens,
+        "stream": True,
+    }
+    if payload.get("temperature") is not None:
         body["temperature"] = payload["temperature"]
+    if payload.get("reasoning_effort") is not None:
+        body["reasoning"] = {"effort": payload["reasoning_effort"]}
+
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    resp = requests.post(api_url, headers=headers, json=body, stream=True, timeout=60)
+    resp = requests.post(api_url, headers=headers, json=body, stream=True, timeout=API_TIMEOUT)
     if resp.status_code != 200:
-        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
-        sys.exit(1)
-    for line in resp.iter_lines():
-        if not line:
-            continue
-        line = line.decode("utf-8", errors="replace")
+        _fail_http(resp)
+    for line in _iter_sse_lines(resp):
         if line.startswith("data: "):
             data = line[6:]
             if data == "[DONE]":
                 break
             try:
                 chunk = json.loads(data)
-                if chunk.get("type") == "response.output_text.delta":
+                ctype = chunk.get("type")
+                if ctype == "response.output_text.delta":
                     print(chunk.get("delta", ""), end="", flush=True)
+                elif ctype == "response.failed":
+                    print(f"\nAPI 失败: {chunk}")
+                    sys.exit(1)
             except json.JSONDecodeError:
                 pass
     print()
 
+
 def call_chat(api_url, api_key, payload):
-    """调用 OpenAI Chat Completions API"""
+    """调用 OpenAI Chat Completions API（流式）"""
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    resp = requests.post(api_url, headers=headers, json=payload, stream=True, timeout=60)
+    resp = requests.post(api_url, headers=headers, json=payload, stream=True, timeout=API_TIMEOUT)
     if resp.status_code != 200:
-        print(f"API 请求失败 ({resp.status_code}): {resp.text[:500]}")
-        sys.exit(1)
-    for line in resp.iter_lines():
-        if line:
-            line = line.decode("utf-8", errors="replace")
-            if line.startswith("data: ") and line != "data: [DONE]":
-                try:
-                    chunk = json.loads(line[6:])
-                    choices = chunk.get("choices")
-                    if choices and len(choices) > 0:
-                        delta = choices[0].get("delta", {})
-                        content = delta.get("content", "")
-                        if content:
-                            print(content, end="", flush=True)
-                except json.JSONDecodeError:
-                    pass
+        _fail_http(resp)
+    for line in _iter_sse_lines(resp):
+        if line.startswith("data: ") and line != "data: [DONE]":
+            try:
+                chunk = json.loads(line[6:])
+                choices = chunk.get("choices")
+                if choices and len(choices) > 0:
+                    delta = choices[0].get("delta", {})
+                    content = delta.get("content", "")
+                    if content:
+                        print(content, end="", flush=True)
+            except json.JSONDecodeError:
+                pass
     print()
 
-def describe_image(image_source=None, strength=None, thinking_effort=None, from_clipboard=False, query=None, max_size=1024, image_list=None, use_default_prompt=True):
+def describe_image(image_source=None, strength=None, thinking_effort=None, from_clipboard=False, query=None, max_size=1024, image_list=None, use_default_prompt=True, max_tokens=None):
     config = load_config()
     if not config["api_key"]:
         print("错误: 未配置 API Key")
@@ -344,6 +436,8 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
     if not config["api_base"]:
         print("错误: 未配置 API 地址")
         sys.exit(1)
+    if max_tokens is None:
+        max_tokens = config.get("max_tokens") or DEFAULT_MAX_TOKENS
 
     sources = image_list or []
     if from_clipboard:
@@ -411,13 +505,13 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
     payload = {
         "model": config["model"],
         "messages": [{"role": "user", "content": content}],
-        "max_tokens": 1024,
+        "max_tokens": max_tokens,
+        "stream": True,
     }
     if strength is not None:
         payload["temperature"] = strength
     if thinking_effort is not None:
         payload["reasoning_effort"] = thinking_effort
-    payload["stream"] = True
 
     api_url = config["api_base"].rstrip("/")
     api_key = config["api_key"]
@@ -438,6 +532,88 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
         print(f"请求出错: {e}")
         sys.exit(1)
 
+def _probe_api(config):
+    """按 api_type 发最小探测请求，返回 (ok, detail)"""
+    api_base = (config.get("api_base") or "").rstrip("/")
+    api_key = config.get("api_key") or ""
+    model = config.get("model") or "test"
+    api_type = detect_api_type(api_base)
+    try:
+        if api_type == "gemini":
+            url = api_base
+            if "generateContent" not in url and "streamGenerateContent" not in url:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            else:
+                url = url.replace(":streamGenerateContent", ":generateContent")
+            if "key=" not in url:
+                sep = "&" if "?" in url else "?"
+                url = f"{url}{sep}key={api_key}"
+            body = {
+                "contents": [{"role": "user", "parts": [{"text": "hi"}]}],
+                "generationConfig": {"maxOutputTokens": 1},
+            }
+            r = requests.post(url, json=body, timeout=8)
+        elif api_type == "claude":
+            url = api_base if "/messages" in api_base else "https://api.anthropic.com/v1/messages"
+            headers = {
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json",
+            }
+            body = {
+                "model": model,
+                "max_tokens": 1,
+                "messages": [{"role": "user", "content": "hi"}],
+            }
+            r = requests.post(url, headers=headers, json=body, timeout=8)
+        elif api_type == "responses":
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            body = {
+                "model": model,
+                "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
+                "max_output_tokens": 16,
+                "stream": False,
+            }
+            r = requests.post(api_base, headers=headers, json=body, timeout=8)
+        else:
+            headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+            body = {
+                "model": model,
+                "messages": [{"role": "user", "content": "hi"}],
+                "max_tokens": 1,
+                "stream": False,
+            }
+            r = requests.post(api_base, headers=headers, json=body, timeout=8)
+
+        ok_api = r.status_code in (200, 400, 401, 403, 404, 422, 429)
+        if r.status_code == 200:
+            msg = f"正常 ({api_type})"
+        elif r.status_code in (401, 403):
+            msg = f"{r.status_code} 鉴权失败 ({api_type})"
+            ok_api = False
+        else:
+            detail = ""
+            try:
+                j = r.json()
+                detail = (
+                    (j.get("error") or {}).get("message")
+                    if isinstance(j.get("error"), dict)
+                    else j.get("error") or j.get("message") or ""
+                )
+                if isinstance(detail, dict):
+                    detail = detail.get("message") or str(detail)
+                detail = str(detail)[:60]
+            except Exception:
+                detail = (r.text or "")[:60]
+            msg = f"{r.status_code} ({api_type}" + (f", {detail}" if detail else "") + ")"
+            # 400/422 常表示服务可达但探测 payload 不完全匹配，仍算连通
+            if r.status_code in (400, 422, 429):
+                ok_api = True
+        return ok_api, msg
+    except Exception as e:
+        return False, f"{api_type}: {str(e)[:50]}"
+
+
 def doctor():
     ok = True
     def chk(name, status, detail=""):
@@ -457,19 +633,12 @@ def doctor():
     chk("API Key", bool(c["api_key"]), "\u5df2\u8bbe\u7f6e" if c["api_key"] else "\u672a\u8bbe\u7f6e")
     chk("API \u5730\u5740", bool(c["api_base"]), c["api_base"] if c["api_base"] else "\u672a\u8bbe\u7f6e")
     chk("\u6a21\u578b", bool(c["model"]), c["model"] if c["model"] else "\u672a\u8bbe\u7f6e")
+    chk("max_tokens", True, str(c.get("max_tokens") or DEFAULT_MAX_TOKENS))
+    if c["api_base"]:
+        chk("API \u7c7b\u578b", True, detect_api_type(c["api_base"]))
     if c["api_key"] and c["api_base"]:
-        try:
-            r = requests.post(c['api_base'].rstrip('/'), json={"model": c['model'] or "test", "messages":[{"role":"user","content":"hi"}], "max_tokens":1, "stream":False}, headers={"Authorization": f"Bearer {c['api_key']}", "Content-Type": "application/json"}, timeout=8)
-            ok_api = r.status_code in (200, 400, 422, 429)
-            msg = f"{r.status_code}" if r.status_code != 200 else "\u6b63\u5e38"
-            if r.status_code == 400:
-                try:
-                    e = r.json().get('error',{}).get('message','') or r.json().get('message','')
-                    msg = f"400 ({e[:40]})" if e else "400 (\u53ef\u8fbe)"
-                except: msg = "400 (\u53ef\u8fbe)"
-            chk("API \u8fde\u901a", ok_api, msg)
-        except Exception as e:
-            chk("API \u8fde\u901a", False, str(e)[:50])
+        ok_api, msg = _probe_api(c)
+        chk("API \u8fde\u901a", ok_api, msg)
     else:
         chk("API \u8fde\u901a", False, "\u8df3\u8fc7")
     print()
@@ -599,11 +768,13 @@ if __name__ == "__main__":
         print("    openvl <图片> -t 0.3         # 温度（0~1，越低越严谨）")
         print("    openvl <图片> -T low         # 思考深度 (low|medium|high)")
         print("    openvl <图片> -s 512         # 图片最大边长（默认1024，越小越省）")
+        print("    openvl <图片> -m 8192       # 最大输出 token（默认16384）")
         print()
         print("  配置:")
         print("    openvl -key <密钥>           # 设置 API Key")
         print("    openvl -api <地址>           # 设置 API 地址")
         print("    openvl -model <模型>         # 设置默认模型")
+        print("    openvl -max-tokens <N>      # 设置默认 max_tokens")
         print("    openvl -cfg                  # 查看当前配置")
         print("    openvl doctor               # 环境诊断")
         print("    openvl setup                # 交互式配置")
@@ -636,10 +807,18 @@ if __name__ == "__main__":
             sys.exit(1)
         set_config("model", sys.argv[2])
         sys.exit(0)
+    if sys.argv[1] in ("--set-max-tokens", "-max-tokens"):
+        if len(sys.argv) < 3:
+            print("请提供 max_tokens 数值")
+            sys.exit(1)
+        set_config("max_tokens", sys.argv[2])
+        sys.exit(0)
     if sys.argv[1] in ("--show-config", "-cfg"):
         c = load_config()
         print(f"API 地址: {c['api_base']}")
         print(f"默认模型: {c['model']}")
+        print(f"max_tokens: {c.get('max_tokens') or DEFAULT_MAX_TOKENS}")
+        print(f"API 类型: {detect_api_type(c.get('api_base') or '')}")
         key = c['api_key']
         if key:
             print(f"API Key: {key[:8]}...{key[-4:]}")
@@ -651,6 +830,7 @@ if __name__ == "__main__":
     strength = None
     thinking_effort = None
     max_size = 1024
+    max_tokens = None
     clip = False
     stdin_mode = False
     base64_mode = False
@@ -666,6 +846,13 @@ if __name__ == "__main__":
         elif sys.argv[i] in ("-s", "--size"):
             i += 1
             max_size = int(sys.argv[i]) if i < len(sys.argv) else 1024
+        elif sys.argv[i] in ("-m", "--max-tokens"):
+            i += 1
+            try:
+                max_tokens = int(sys.argv[i]) if i < len(sys.argv) else None
+            except ValueError:
+                print(f"无效的 max_tokens: {sys.argv[i]}")
+                sys.exit(1)
         elif sys.argv[i] == "--stdin":
             stdin_mode = True
         elif sys.argv[i] == "--base64":
@@ -700,12 +887,12 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if clip:
-        describe_image(from_clipboard=True, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt)
+        describe_image(from_clipboard=True, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt, max_tokens=max_tokens)
     elif images:
         if base64_mode:
             uri = f"data:image/jpeg;base64,{images[-1]}"
-            describe_image(image_source=uri, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt)
+            describe_image(image_source=uri, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt, max_tokens=max_tokens)
         else:
-            describe_image(image_list=images, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt)
+            describe_image(image_list=images, strength=strength, thinking_effort=thinking_effort, query=query, max_size=max_size, use_default_prompt=not no_default_prompt, max_tokens=max_tokens)
     else:
         print("请提供图片路径或使用 -c")
