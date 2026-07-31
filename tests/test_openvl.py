@@ -215,6 +215,19 @@ class TestSetupAndSourceGuards(unittest.TestCase):
         self.assertNotIn('"max_tokens": 1024', src)
         self.assertNotIn('"max_output_tokens": 1024', src)
 
+    def test_doctor_probe_streams_responses(self):
+        """回归：doctor 对 /v1/responses 的探测必须用流式。
+
+        部分中转只接受 stream=true，非流式探测会被 400 拒（Args validation failed）。
+        """
+        src = VISION_PY.read_text(encoding="utf-8")
+        probe = src[src.index("def _probe_api(config):") : src.index("def doctor():")]
+        start = probe.index('elif api_type == "responses":')
+        end = probe.index("else:", start)
+        branch = probe[start:end]
+        self.assertIn('"stream": True', branch)
+        self.assertNotIn('"stream": False', branch)
+
     def test_url_fail_no_silent_fallback(self):
         src = VISION_PY.read_text(encoding="utf-8")
         start = src.index('if img_path.startswith("http://")')

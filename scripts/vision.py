@@ -580,7 +580,8 @@ def _probe_api(config):
                 "model": model,
                 "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi"}]}],
                 "max_output_tokens": 16,
-                "stream": False,
+                # 部分中转的 /v1/responses 只接受流式；探测与真实请求保持一致
+                "stream": True,
             }
             r = requests.post(api_base, headers=headers, json=body, timeout=8)
         else:
