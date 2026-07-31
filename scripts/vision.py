@@ -54,6 +54,14 @@ if sys.platform == "win32":
 DEFAULT_MAX_TOKENS = 16384
 API_TIMEOUT = 180
 
+# 配置模板占位符特征：load_config 读取时遇到这些内容视为“未配置”，跳过
+# （postinstall 不再生成模板，但历史安装/用户手抄模板仍可能残留）
+PLACEHOLDER_MARKS = ("你的", "模型ID", "your", "YOUR_API", "replace", "xxx")
+
+
+def _is_placeholder(text):
+    return any(mark in text for mark in PLACEHOLDER_MARKS)
+
 
 def set_config(key, value):
     """写入配置项到 config.env"""
@@ -112,13 +120,13 @@ def load_config():
 
     # 优先级：环境变量 > 配置文件（文件只填空，不覆盖 env）
     env_key = os.environ.get("VISION_API_KEY", "")
-    if env_key and "你的" not in env_key:
+    if env_key and not _is_placeholder(env_key):
         config["api_key"] = env_key
     env_base = os.environ.get("VISION_API_BASE", "")
-    if env_base:
+    if env_base and not _is_placeholder(env_base):
         config["api_base"] = env_base.rstrip("/")
     env_model = os.environ.get("VISION_MODEL", "")
-    if env_model:
+    if env_model and not _is_placeholder(env_model):
         config["model"] = env_model
     env_max = os.environ.get("VISION_MAX_TOKENS", "")
     if env_max:
@@ -139,13 +147,13 @@ def load_config():
         with open(cfg_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if line.startswith("VISION_API_KEY=") and "你的" not in line:
+                if line.startswith("VISION_API_KEY=") and not _is_placeholder(line):
                     if not config["api_key"]:
                         config["api_key"] = line.split("=", 1)[1].strip()
-                elif line.startswith("VISION_API_BASE="):
+                elif line.startswith("VISION_API_BASE=") and not _is_placeholder(line):
                     if not config["api_base"]:
                         config["api_base"] = line.split("=", 1)[1].strip().rstrip("/")
-                elif line.startswith("VISION_MODEL="):
+                elif line.startswith("VISION_MODEL=") and not _is_placeholder(line):
                     if not config["model"]:
                         config["model"] = line.split("=", 1)[1].strip()
                 elif line.startswith("VISION_MAX_TOKENS="):

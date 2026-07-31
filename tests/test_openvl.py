@@ -91,6 +91,40 @@ class TestLoadConfig(unittest.TestCase):
         self.assertGreaterEqual(cfg["max_tokens"], 1024)
         self.assertEqual(self.v.DEFAULT_MAX_TOKENS, 16384)
 
+    def test_template_placeholder_does_not_shadow_real_config(self):
+        """回归：包目录的模板 config.env（占位符）不得遮蔽用户真实配置。
+
+        曾因 postinstall 把 config.env.example 复制进包目录，而 load_config
+        只过滤了 KEY 的“你的”占位，BASE/MODEL 被假值填充，导致全局 CLI
+        一直读假配置。
+        """
+        for k in ("VISION_API_KEY", "VISION_API_BASE", "VISION_MODEL", "VISION_MAX_TOKENS"):
+            os.environ.pop(k, None)
+
+        with tempfile.TemporaryDirectory() as pkg_dir, tempfile.TemporaryDirectory() as home_dir:
+            pkg_cfg = Path(pkg_dir) / "config.env"
+            pkg_cfg.write_text(
+                "VISION_API_KEY=你的API密钥\n"
+                "VISION_API_BASE=https://你的中转站/v1/chat/completions\n"
+                "VISION_MODEL=模型ID\n",
+                encoding="utf-8",
+            )
+            real_cfg = Path(home_dir) / "config.env"
+            real_cfg.write_text(
+                "VISION_API_KEY=sk-real-key\n"
+                "VISION_API_BASE=https://real.example/v1/responses\n"
+                "VISION_MODEL=real-model\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(self.v, "ENV_FILE", pkg_cfg), \
+                 mock.patch.object(self.v, "HOME_DIR", Path(home_dir)), \
+                 mock.patch.object(self.v, "HOME_DIR2", Path(home_dir)):
+                cfg = self.v.load_config()
+
+        self.assertEqual(cfg["api_key"], "sk-real-key")
+        self.assertEqual(cfg["api_base"], "https://real.example/v1/responses")
+        self.assertEqual(cfg["model"], "real-model")
+
 
 class TestCliParsing(unittest.TestCase):
     """复刻 CLI 分离 query 的逻辑，防止 -c 带问题再回归。"""
