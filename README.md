@@ -13,8 +13,25 @@
 - **AI IDE 用户**（Claude Code / Pi / Cursor）：让 AI 自动识别你发的图
 - **聊天软件用户**（Cherry Studio）：通过 MCP 给机器人加识图
 
-> ⚠️ **前提**：OpenVL 不内置模型，它只是一个"转述器"——你需要一个支持图片输入的
+> **前提**：OpenVL 不内置模型，它只是一个"转述器"——你需要一个支持图片输入的
 > OpenAI 兼容 API（中转站或官方 API）作为后端。详见 [准备一个视觉 API](#准备一个视觉-api)。
+
+---
+
+## AI 助手自动安装
+
+如果你是 AI agent（Claude Code / Pi 等）或想一条命令装完 CLI + skills，执行：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/scp3500/openvl/main/install.sh)
+```
+
+脚本会：检测 Node.js → `npm install -g` → 检查 Python 依赖 → 把 skills 克隆到
+`~/.agents/skills`、`~/.claude/skills`、`~/.pi/agent/skills`（已存在则跳过）→ 提示配置。
+
+Windows 原生 PowerShell：`install.ps1`（检测 Node → npm → 复制 skills）。
+
+装完仍需配置 API（见[快速开始](#快速开始)），然后 `openvl doctor` 验证。
 
 ---
 
@@ -102,7 +119,7 @@ export VISION_API_BASE=https://xxx/v1/chat/completions
 export VISION_MODEL=gpt-5.4-mini
 ```
 
-> 💡 **为什么推荐放 `~/.pi/agent/skills/openvl/`**：`openvl -key` 写入的是 npm 包目录，
+> **为什么推荐放 `~/.pi/agent/skills/openvl/`**：`openvl -key` 写入的是 npm 包目录，
 > 每次 `npm update` 会被覆盖；放 skills 目录或环境变量则一劳永逸。
 
 配置完跑 `openvl doctor`，会一次性检查 Python 环境、依赖、配置读取和 API 连通。

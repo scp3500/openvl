@@ -13,8 +13,25 @@ Who it's for:
 - **AI IDE users** (Claude Code / Pi / Cursor): let your AI read images automatically
 - **Chat app users** (Cherry Studio): add vision to your bot via MCP
 
-> ⚠️ **Prerequisite**: OpenVL ships no model of its own — it's a "transcriber" that calls
+> **Prerequisite**: OpenVL ships no model of its own — it's a "transcriber" that calls
 > *your* OpenAI-compatible multimodal API (relay or official). See [Prepare a vision API](#prepare-a-vision-api).
+
+---
+
+## AI Agent Auto-Install
+
+If you are an AI agent (Claude Code / Pi etc.) or want CLI + skills in one shot, run:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/scp3500/openvl/main/install.sh)
+```
+
+The script: checks Node.js → `npm install -g` → checks Python deps → clones skills into
+`~/.agents/skills`, `~/.claude/skills`, `~/.pi/agent/skills` (skips existing) → prints config hints.
+
+Windows native PowerShell: `install.ps1` (Node check → npm → copy skills).
+
+You still need to configure an API (see [Quick Start](#quick-start)), then verify with `openvl doctor`.
 
 ---
 
@@ -102,7 +119,7 @@ export VISION_API_BASE=https://xxx/v1/chat/completions
 export VISION_MODEL=gpt-5.4-mini
 ```
 
-> 💡 **Why put config under `~/.pi/agent/skills/openvl/`**: `openvl -key` writes into the npm
+> **Why put config under `~/.pi/agent/skills/openvl/`**: `openvl -key` writes into the npm
 > package dir, which is **overwritten on every `npm update`**; the skills dir or env vars survive.
 
 Run `openvl doctor` after configuring — it checks Python, dependencies, config loading and API connectivity in one shot.

@@ -194,10 +194,30 @@ git 提交不会自动发 npm。建议顺序：
 
 | 文档 | 给谁看 |
 |------|--------|
-| `README.md` / `README.en.md` | 用户安装与使用 |
+| `README.md` / `README.en.md` | 用户安装与使用（含「AI 助手自动安装」区） |
 | `docs/index.html` | 产品介绍页 |
 | `docs/DEVELOPMENT.md` | 维护者：目录、副本、测试、发版 |
 | `integrations/README.md` | OpenCode / 各工具集成 |
 | `SKILL.md` | 宿主 AI 的调用约定 |
+| `install.sh` | AI/用户一键安装（Linux/macOS/Git Bash） |
+| `install.ps1` | Windows 一键安装 |
 
 有结构性变更（新目录、新配置项、发版流程变化）时，优先更新本文件。
+
+## 9. AI 助手安装指引（给 Agent 读）
+
+AI agent（Claude Code / Pi 等）被要求“安装 openvl”时，按此执行：
+
+1. 读 `README.md` 的「AI 助手自动安装」区，执行：
+   `bash <(curl -fsSL https://raw.githubusercontent.com/scp3500/openvl/main/install.sh)`
+   （或 `install.ps1`，Windows PowerShell）
+2. 配置 API（三选一）：
+   - `openvl -key <KEY> -api <BASE> -model <MODEL>`（写入 npm 包目录，升级会丢）
+   - 写 `~/.pi/agent/skills/openvl/config.env`（推荐，升级不丢）
+   - 环境变量 `VISION_API_KEY` / `VISION_API_BASE` / `VISION_MODEL`
+3. 验证：`openvl doctor`（应显示 Python/依赖/配置/API 连通全 ✓）
+4. 失败排查：`VISION_API_BASE` 须以 `/v1/chat/completions` 或 `/v1/responses` 结尾；
+   key 有效；模型支持图片输入；缺依赖则 `pip install requests pillow`。
+
+注意：`install.sh` 装完的 skills 是 git clone（含 `.git`），与 npm 包目录是两份副本；
+维护/改代码只在 git 工作区（见 §2），其他目录用同步命令更新。
