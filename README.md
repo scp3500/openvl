@@ -91,7 +91,7 @@ notepad ~/.pi/agent/skills/openvl/config.env
 VISION_API_KEY=sk-你的密钥
 VISION_API_BASE=https://你的中转站/v1/chat/completions
 VISION_MODEL=你的视觉模型ID
-VISION_MAX_TOKENS=16384   # 可选，默认 16384
+VISION_MAX_TOKENS=32768   # 可选，默认 32768
 ```
 
 **方式 3：环境变量**
@@ -121,7 +121,7 @@ export VISION_MODEL=gpt-5.4-mini
 | `openvl <图片> -t 0.3` | 温度（0~1） |
 | `openvl <图片> -T high` | 思考深度 |
 | `openvl <图片> -s 512` | 最大边长（默认 1024） |
-| `openvl <图片> -m 8192` | 最大输出 token（默认 16384） |
+| `openvl <图片> -m 8192` | 最大输出 token（默认 32768） |
 | `openvl -P` | 跳过默认描述提示词 |
 | `openvl -cfg` | 查看当前配置 |
 | `openvl doctor` | 自检 |

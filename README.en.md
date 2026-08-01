@@ -91,7 +91,7 @@ notepad ~/.pi/agent/skills/openvl/config.env
 VISION_API_KEY=sk-your-key
 VISION_API_BASE=https://your-proxy/v1/chat/completions
 VISION_MODEL=your-vision-model
-VISION_MAX_TOKENS=16384   # optional, default 16384
+VISION_MAX_TOKENS=32768   # optional, default 32768
 ```
 
 **Way 3: environment variables**
@@ -121,7 +121,7 @@ Run `openvl doctor` after configuring — it checks Python, dependencies, config
 | `openvl <img> -t 0.3` | Temperature (0~1) |
 | `openvl <img> -T high` | Reasoning effort |
 | `openvl <img> -s 512` | Max dimension (default 1024) |
-| `openvl <img> -m 8192` | Max output tokens (default 16384) |
+| `openvl <img> -m 8192` | Max output tokens (default 32768) |
 | `openvl -P` | Skip default description prompt |
 | `openvl -cfg` | Show config |
 | `openvl doctor` | Self-check |

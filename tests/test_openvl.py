@@ -89,7 +89,7 @@ class TestLoadConfig(unittest.TestCase):
         # 文件若未写 max_tokens，应落到默认
         self.assertIsInstance(cfg["max_tokens"], int)
         self.assertGreaterEqual(cfg["max_tokens"], 1024)
-        self.assertEqual(self.v.DEFAULT_MAX_TOKENS, 16384)
+        self.assertEqual(self.v.DEFAULT_MAX_TOKENS, 32768)
 
     def test_template_placeholder_does_not_shadow_real_config(self):
         """回归：包目录的模板 config.env（占位符）不得遮蔽用户真实配置。

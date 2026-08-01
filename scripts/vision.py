@@ -51,7 +51,7 @@ if sys.platform == "win32":
     except:
         pass
 
-DEFAULT_MAX_TOKENS = 16384
+DEFAULT_MAX_TOKENS = 32768
 API_TIMEOUT = 180
 
 # 配置模板占位符特征：load_config 读取时遇到这些内容视为“未配置”，跳过
@@ -777,7 +777,7 @@ if __name__ == "__main__":
         print("    openvl <图片> -t 0.3         # 温度（0~1，越低越严谨）")
         print("    openvl <图片> -T low         # 思考深度 (low|medium|high)")
         print("    openvl <图片> -s 512         # 图片最大边长（默认1024，越小越省）")
-        print("    openvl <图片> -m 8192       # 最大输出 token（默认16384）")
+        print("    openvl <图片> -m 8192       # 最大输出 token（默认32768）")
         print()
         print("  配置:")
         print("    openvl -key <密钥>           # 设置 API Key")

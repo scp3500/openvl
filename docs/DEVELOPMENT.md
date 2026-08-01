@@ -126,12 +126,12 @@ CLI 也可写配置：
 openvl -key sk-xxx
 openvl -api https://.../v1/chat/completions
 openvl -model your-model
-openvl -max-tokens 16384
+openvl -max-tokens 32768
 openvl -cfg
 openvl doctor
 ```
 
-默认 `max_tokens` 为 **16384**；单次可 `openvl 图 -m 8192`。
+默认 `max_tokens` 为 **32768**；单次可 `openvl 图 -m 8192`。
 
 ---
 
