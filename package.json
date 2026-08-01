@@ -1,6 +1,6 @@
 {
   "name": "@scp3500/openvl",
-  "version": "1.1.75",
+  "version": "1.1.76",
   "description": "让 AI 看懂图片 - 支持命令行和 MCP 服务器",
   "bin": {
     "openvl": "./bin/openvl"

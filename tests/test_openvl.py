@@ -200,6 +200,35 @@ class TestCliParsing(unittest.TestCase):
         self.assertEqual(r["images"], ["iVBORxxx"])
 
 
+class TestConfigArgs(unittest.TestCase):
+    """openvl -key X -api Y -model Z 连写解析（2026-08-01 新增）。"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.v = load_vision()
+
+
+    def test_chained_config_args(self):
+        updates = self.v._parse_config_args(
+            ["-key", "sk-x", "-api", "https://x/v1/responses", "-model", "m1", "-max-tokens", "4096"]
+        )
+        self.assertEqual(updates["key"], "sk-x")
+        self.assertEqual(updates["base"], "https://x/v1/responses")
+        self.assertEqual(updates["model"], "m1")
+        self.assertEqual(updates["max_tokens"], "4096")
+
+    def test_single_config_arg(self):
+        updates = self.v._parse_config_args(["--set-model", "m2"])
+        self.assertEqual(updates, {"model": "m2"})
+
+    def test_missing_value_raises(self):
+        with self.assertRaises(ValueError):
+            self.v._parse_config_args(["-key"])
+
+    def test_unknown_flag_raises(self):
+        with self.assertRaises(ValueError):
+            self.v._parse_config_args(["-key", "sk-x", "-wat", "1"])
+
 class TestSetupAndSourceGuards(unittest.TestCase):
     def test_setup_calls_doctor(self):
         src = VISION_PY.read_text(encoding="utf-8")

@@ -50,6 +50,8 @@ read_when:
 npm install -g @scp3500/openvl
 ```
 
+装完需配置 API（`-key/-api/-model` 可一行连写），再 `openvl doctor` 验证；详见 README「配置」。
+
 ## 使用方式
 
 ```bash

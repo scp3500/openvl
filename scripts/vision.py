@@ -63,6 +63,34 @@ def _is_placeholder(text):
     return any(mark in text for mark in PLACEHOLDER_MARKS)
 
 
+CONFIG_FLAG_TO_KEY = {
+    "-key": "key", "--set-key": "key",
+    "-api": "base", "--set-base": "base",
+    "-model": "model", "--set-model": "model",
+    "-max-tokens": "max_tokens", "--set-max-tokens": "max_tokens",
+}
+
+
+def _parse_config_args(argv):
+    """解析配置命令行参数，支持连写。
+
+    例：["-key", "sk-x", "-api", "https://...", "-model", "m"]
+    返回：{"key": "sk-x", "base": "https://...", "model": "m"}
+    遇到缺失值或未知参数时抛 ValueError。
+    """
+    updates = {}
+    i = 0
+    while i < len(argv):
+        flag = argv[i]
+        if flag not in CONFIG_FLAG_TO_KEY:
+            raise ValueError(f"未知配置参数: {flag}")
+        if i + 1 >= len(argv):
+            raise ValueError(f"请提供 {flag} 的值")
+        updates[CONFIG_FLAG_TO_KEY[flag]] = argv[i + 1]
+        i += 2
+    return updates
+
+
 def set_config(key, value):
     """写入配置项到 config.env"""
     config = load_config()
@@ -797,30 +825,16 @@ if __name__ == "__main__":
         print(f"OpenVL v{OPENVL_VERSION}")
         sys.exit(0)
 
-    # 配置管理命令
-    if sys.argv[1] in ("--set-key", "-key"):
-        if len(sys.argv) < 3:
-            print("请提供 API Key")
-            sys.exit(1)
-        set_config("key", sys.argv[2])
-        sys.exit(0)
-    if sys.argv[1] in ("--set-base", "-api"):
-        if len(sys.argv) < 3:
-            print("请提供 API 地址")
-            sys.exit(1)
-        set_config("base", sys.argv[2])
-        sys.exit(0)
-    if sys.argv[1] in ("--set-model", "-model"):
-        if len(sys.argv) < 3:
-            print("请提供模型名")
-            sys.exit(1)
-        set_config("model", sys.argv[2])
-        sys.exit(0)
-    if sys.argv[1] in ("--set-max-tokens", "-max-tokens"):
-        if len(sys.argv) < 3:
-            print("请提供 max_tokens 数值")
-            sys.exit(1)
-        set_config("max_tokens", sys.argv[2])
+    # 配置管理命令（支持连写：openvl -key X -api Y -model Z -max-tokens N）
+    if sys.argv[1] in (
+        "-key", "--set-key",
+        "-api", "--set-base",
+        "-model", "--set-model",
+        "-max-tokens", "--set-max-tokens",
+    ):
+        config_updates = _parse_config_args(sys.argv[1:])
+        for key, value in config_updates.items():
+            set_config(key, value)
         sys.exit(0)
     if sys.argv[1] in ("--show-config", "-cfg"):
         c = load_config()

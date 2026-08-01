@@ -51,9 +51,8 @@ Write-Host ""
 Write-Host "=== 安装完成 ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "下一步：" -ForegroundColor Yellow
-Write-Host "  1. 配置 API Key:" -ForegroundColor White
-Write-Host "     openvl -key sk-你的密钥" -ForegroundColor Gray
-Write-Host "     openvl -api https://你的中转站/v1/chat/completions" -ForegroundColor Gray
+Write-Host "  1. 配置 API（可一行连写）:" -ForegroundColor White
+Write-Host "     openvl -key sk-你的密钥 -api https://你的中转站/v1/chat/completions -model 你的视觉模型" -ForegroundColor Gray
 Write-Host "  2. 测试:" -ForegroundColor White
 Write-Host "     openvl <图片路径>" -ForegroundColor Gray
 Write-Host ""
