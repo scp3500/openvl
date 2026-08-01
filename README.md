@@ -2,52 +2,114 @@
 
 [中文](README.md) | [English](README.en.md)
 
-让没有视觉能力的 AI 模型也能看懂图片。
+**给没有视觉能力的 AI 模型装上眼睛**：把图片转述成文字，让 DeepSeek / 纯文本模型也能"看图"。
 
 ```
 用户发图片 → OpenVL 调用多模态 API → 返回文字描述 → AI 根据描述回复
 ```
 
+适合谁：
+- **终端用户**：命令行看图、OCR 截图
+- **AI IDE 用户**（Claude Code / Pi / Cursor）：让 AI 自动识别你发的图
+- **聊天软件用户**（Cherry Studio）：通过 MCP 给机器人加识图
+
+> ⚠️ **前提**：OpenVL 不内置模型，它只是一个"转述器"——你需要一个支持图片输入的
+> OpenAI 兼容 API（中转站或官方 API）作为后端。详见 [准备一个视觉 API](#准备一个视觉-api)。
+
+---
+
 ## 快速开始
 
-### 1. 安装
+按你的用法选一条路，不用全部装。
+
+### A. 终端 CLI
 
 ```bash
-npm install -g @scp3500/openvl
-```
-
-### 2. 配置 API
-
-```bash
-openvl -key sk-你的密钥
+npm install -g @scp3500/openvl     # 安装
+openvl -key sk-你的密钥              # 配置（一行一步）
 openvl -api https://你的中转站/v1/chat/completions
+openvl -model 你的视觉模型ID
+openvl doctor                       # 自检：配置和 API 连通都没问题
+openvl D:\截图.png                  # 看图
+openvl -c "图里写了什么"             # 读剪贴板截图 + 提问
 ```
 
-### 3. 看图
+### B. AI IDE（Claude Code / Pi）
 
-直接看文件：
+把 skills 克隆到对应目录，AI 遇到图片会自动调 openvl：
 
 ```bash
-openvl D:\截图.png
+# Claude Code
+git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
+# Pi
+git clone https://github.com/scp3500/openvl.git ~/.pi/agent/skills/openvl
 ```
 
-或截图到剪贴板后提问：
+装完后仍需 `openvl -key/-api/-model` 配置 API（见下）。
+
+### C. 聊天软件（Cherry Studio）
+
+配置为 MCP 服务器：
+
+| 字段 | 值 |
+|------|-----|
+| 命令 | `openvl` |
+| 参数 | `--mcp` |
+| 超时 | `90` |
+
+AI 会用 `describe_image` / `describe_clipboard` 工具。
+
+---
+
+## 准备一个视觉 API
+
+OpenVL 调用的是**你提供的**多模态 API（OpenAI 兼容即可，Chat Completions / Responses / Gemini / Claude 自动识别）。
+
+- 有中转站：直接用它支持的模型（如 `gpt-5.x`、`gemini-*` 等带视觉的模型）
+- 没有：注册任意提供 OpenAI 兼容视觉接口的服务商，拿到 `base_url` + `key` + 模型名
+
+---
+
+## 配置
+
+三种方式，**优先级：环境变量 > 配置文件**（配置文件只填空，不覆盖环境变量）。
+
+**方式 1：命令行写入**（简单，但注意 npm 升级会丢，见下）
 
 ```bash
-openvl -c "这张图里有什么"
+openvl -key sk-xxx -api https://xxx/v1/chat/completions -model gpt-5.4-mini
 ```
 
-### 4. AI IDE 用户装 skills
+**方式 2：配置文件**（推荐，升级不丢）
 
 ```bash
-git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
+mkdir -p ~/.pi/agent/skills/openvl
+notepad ~/.pi/agent/skills/openvl/config.env
 ```
 
-配置后 AI（Pi / Claude Code 等）遇到图片会自动调 openvl。非 IDE 用户可跳过此步。
+```ini
+VISION_API_KEY=sk-你的密钥
+VISION_API_BASE=https://你的中转站/v1/chat/completions
+VISION_MODEL=你的视觉模型ID
+VISION_MAX_TOKENS=16384   # 可选，默认 16384
+```
 
-## 使用方式
+**方式 3：环境变量**
 
-### CLI
+```bash
+export VISION_API_KEY=sk-xxx
+export VISION_API_BASE=https://xxx/v1/chat/completions
+export VISION_MODEL=gpt-5.4-mini
+```
+
+> 💡 **为什么推荐放 `~/.pi/agent/skills/openvl/`**：`openvl -key` 写入的是 npm 包目录，
+> 每次 `npm update` 会被覆盖；放 skills 目录或环境变量则一劳永逸。
+
+配置完跑 `openvl doctor`，会一次性检查 Python 环境、依赖、配置读取和 API 连通。
+
+---
+
+## CLI 参考
 
 | 命令 | 说明 |
 |------|------|
@@ -58,110 +120,64 @@ git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 | `openvl --base64 iVBOR...` | 传 raw base64 |
 | `openvl <图片> -t 0.3` | 温度（0~1） |
 | `openvl <图片> -T high` | 思考深度 |
-| `openvl <图片> -s 512` | 最大边长（默认1024） |
+| `openvl <图片> -s 512` | 最大边长（默认 1024） |
 | `openvl <图片> -m 8192` | 最大输出 token（默认 16384） |
 | `openvl -P` | 跳过默认描述提示词 |
 | `openvl -cfg` | 查看当前配置 |
-| `openvl doctor` | 自检：Python/依赖/配置/API 连通 |
+| `openvl doctor` | 自检 |
 
-多个图片一起传：`openvl a.png b.png 描述这些图`
+多个图片：`openvl a.png b.png 描述这些图`
 
-### MCP（Cherry Studio）
+---
 
-| 字段 | 值 |
-|------|-----|
-| 命令 | `openvl` |
-| 参数 | `--mcp` |
-| 超时 | `90` |
+## 工具集成
 
-AI 会使用 `describe_image` / `describe_clipboard` 工具。
-
-## 配置
-
-优先级：环境变量 > 包目录 config.env > skills 目录 config.env（文件只填空，不覆盖 env）
-
-```ini
-VISION_API_KEY=你的密钥
-VISION_API_BASE=https://你的中转站/v1/chat/completions
-VISION_MODEL=模型ID
-VISION_MAX_TOKENS=16384   # 可选，默认 16384
-```
-
-- `VISION_API_BASE` 支持三种接口：`/v1/chat/completions`（OpenAI）、`/v1/responses`（Responses）、Gemini / Claude 原生地址，自动识别
-- **推荐把 config.env 放在 `~/.pi/agent/skills/openvl/` 下**（或 `~/.agents/skills/openvl/`）：用 `openvl -key/-api/-model` 写入的是 npm 包目录，**npm 升级会被覆盖丢失**；放 skills 目录或环境变量则升级不丢
-- 配置好后可 `openvl doctor` 自检：环境、依赖、配置读取、API 连通一次看清
-
-## 各工具集成
-
-| 工具 | 集成方式 | 说明 |
-|------|----------|------|
-| **OpenCode** | 插件 + AGENTS.md | 粘贴图片后自动分析，无需额外操作 |
-| **Claude Code** | skills | AI 识别图片路径后自动调用 openvl |
+| 工具 | 方式 | 效果 |
+|------|------|------|
+| **OpenCode** | 插件 | 粘贴图片自动分析 |
+| **Claude Code** | skills | 识别图片路径自动调用 |
 | **Pi** | skills | 同上 |
-| **Cherry Studio** | MCP 服务器 | 通过 describe_image 工具手动调用 |
+| **Cherry Studio** | MCP | 通过 `describe_image` 工具调用 |
 
-### OpenCode
-
-安装插件后，粘贴图片到聊天框即可自动触发 openvl 分析。
+**OpenCode**：复制插件文件，重启即可
 
 ```bash
 mkdir -p ~/.config/opencode/plugin
 cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
 ```
 
-在 `opencode.json` 中添加插件声明，并在 `AGENTS.md` 中配置图片处理规则（详见 `integrations/README.md`）。
+编辑 `~/.config/opencode/opencode.json` 添加 `"plugin": ["./plugin/openvl-image.mjs"]`（完整示例见 `integrations/opencode/opencode.example.json`）。
 
-### Claude Code / Pi
+**Claude Code / Pi**：克隆 skills（见快速开始 B）。
 
-将仓库克隆到 skills 目录即可生效：
+**Cherry Studio**：MCP 配置见快速开始 C。`describe_clipboard` 需要先截图到剪贴板。
 
-```bash
-git clone https://github.com/scp3500/openvl.git ~/.claude/skills/openvl
-```
+---
 
-### Cherry Studio
+## 常见问题
 
-配置为 MCP 服务器，AI 通过 `describe_image` 或 `describe_clipboard` 工具调用：
+**Q: 这不就是 OCR 吗？**
+不全是。OpenVL 是"看图说话"——不仅能提文字，还能描述场景、物体、界面、人物，且可针对图片任意提问。
 
-| 字段 | 值 |
-|------|-----|
-| 命令 | `openvl` |
-| 参数 | `--mcp` |
-| 超时 | `90` |
+**Q: 用哪个模型做后端？**
+任何支持图片输入的 OpenAI 兼容模型。想省钱用便宜的视觉中转模型，想要质量用旗舰。
 
-详见 `integrations/README.md`。
+**Q: 图里的文字转述不全/想完整提取？**
+默认提示词会完整转述文字场景。可加 `-P` 用你自己的提示词，或提问时明确"完整转述文字"。
 
-## 请求流程
+**Q: `openvl doctor` 提示 API 连不上？**
+检查 `VISION_API_BASE` 是否带 `/v1/chat/completions` 或 `/v1/responses` 结尾、key 是否有效、中转站是否支持该模型。
 
-```
-prompts/describe.md(固定提示词) → 用户问题 → 图片数据
-```
+**Q: 更新后配置丢了？**
+大概率是配置写进了 npm 包目录（`openvl -key` 写入位置）。把 `config.env` 移到 `~/.pi/agent/skills/openvl/` 后重配即可。
 
-文本在前、图片在后，便于 API 前缀缓存命中。
+---
 
-## 项目文件
+## 维护者
 
-| 文件 | 作用 |
-|------|------|
-| `scripts/vision.py` | 核心：读图 → 调 API → 输出描述 |
-| `scripts/mcp_server.js` | MCP 服务器 |
-| `prompts/describe.md` | 描述提示词模板 |
-| `SKILL.md` | AI 技能定义 |
-| `tests/test_openvl.py` | 本地单元/冒烟测试 |
-
-## 测试
-
-```bash
-npm test                  # 或: python -X utf8 tests/test_openvl.py
-npm run test:e2e          # 额外打真实 API（需已配置）
-```
-
-默认不访问真实视觉 API；`--e2e` 才会看图验证。
-
-## 开发与多副本说明
-
-本地可能同时存在 git 工作区、Pi/Claude skill 目录、全局 npm 包等多份路径。  
-**维护者请读 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**：真相源、同步方式、配置优先级、发版清单。
+- 测试：`npm test`（离线）/ `npm run test:e2e`（需配置）
+- 项目结构与发版：见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)
+- 本地多份副本（git 工作区 / skills / npm 包）的同步说明也在其中
 
 ## 许可证
 
