@@ -207,6 +207,43 @@ class TestConfigArgs(unittest.TestCase):
     def setUpClass(cls):
         cls.v = load_vision()
 
+    def test_normalize_full_endpoint_unchanged(self):
+        v = self.v
+        self.assertEqual(
+            v.normalize_api_base("https://host/v1/chat/completions"),
+            "https://host/v1/chat/completions",
+        )
+        self.assertEqual(
+            v.normalize_api_base("https://host/v1/responses"),
+            "https://host/v1/responses",
+        )
+
+    def test_normalize_v1_suffix(self):
+        self.assertEqual(
+            self.v.normalize_api_base("https://host/v1"),
+            "https://host/v1/chat/completions",
+        )
+
+    def test_normalize_bare_host(self):
+        self.assertEqual(
+            self.v.normalize_api_base("https://host"),
+            "https://host/v1/chat/completions",
+        )
+
+    def test_normalize_native_hosts_untouched(self):
+        v = self.v
+        self.assertEqual(
+            v.normalize_api_base("https://generativelanguage.googleapis.com/v1beta"),
+            "https://generativelanguage.googleapis.com/v1beta",
+        )
+        self.assertEqual(
+            v.normalize_api_base("https://api.anthropic.com/v1"),
+            "https://api.anthropic.com/v1",
+        )
+
+    def test_normalize_empty(self):
+        self.assertEqual(self.v.normalize_api_base(""), "")
+
 
     def test_chained_config_args(self):
         updates = self.v._parse_config_args(

@@ -1,6 +1,6 @@
 {
   "name": "@scp3500/openvl",
-  "version": "1.1.76",
+  "version": "1.1.77",
   "description": "让 AI 看懂图片 - 支持命令行和 MCP 服务器",
   "bin": {
     "openvl": "./bin/openvl"
@@ -11,7 +11,7 @@
     "test:e2e": "python -X utf8 tests/test_openvl.py --e2e"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=18"
   },
   "keywords": [
     "vision",

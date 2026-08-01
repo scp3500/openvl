@@ -91,11 +91,15 @@ OpenVL 调用的是**你提供的**多模态 API（OpenAI 兼容即可，Chat Co
 
 三种方式，**优先级：环境变量 > 配置文件**（配置文件只填空，不覆盖环境变量）。
 
-**方式 1：命令行写入**（简单，但注意 npm 升级会丢，见下）
+**方式 1：命令行写入**（支持一行连写，`-api` 会自动补全路径）
 
 ```bash
-openvl -key sk-xxx -api https://xxx/v1/chat/completions -model gpt-5.4-mini
+openvl -key sk-xxx -api https://host/v1 -model gpt-5.4-mini
 ```
+
+`-api` 填任意形态都会自动补全为完整地址：`https://host` 或 `https://host/v1`
+会被补成 `https://host/v1/chat/completions`（`/v1/responses` 结尾则用 Responses 格式）。
+Gemini / Claude 原生地址不会被强行改写。
 
 **方式 2：配置文件**（推荐，升级不丢）
 
@@ -122,7 +126,19 @@ export VISION_MODEL=gpt-5.4-mini
 > **为什么推荐放 `~/.pi/agent/skills/openvl/`**：`openvl -key` 写入的是 npm 包目录，
 > 每次 `npm update` 会被覆盖；放 skills 目录或环境变量则一劳永逸。
 
-配置完跑 `openvl doctor`，会一次性检查 Python 环境、依赖、配置读取和 API 连通。
+配置完跑 `openvl doctor`，会一次性检查 Python 环境、依赖、配置读取和 API 连通：
+
+```
+$ openvl doctor
+OpenVL v1.1.76 诊断
+  ✓ Python 3.14
+  ✓ requests / Pillow
+  ✓ API Key 已设置
+  ✓ API 地址 https://host/v1/chat/completions
+  ✓ API 连通 正常 (chat)
+```
+
+也可以 `openvl setup` 走交互式配置向导（逐项提问，适合不想记参数时用）。
 
 ---
 

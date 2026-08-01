@@ -7,15 +7,28 @@
 set -euo pipefail
 
 REPO_URL="https://github.com/scp3500/openvl.git"
+MIN_NODE_MAJOR=18
 
 echo "=== OpenVL install ==="
 
-# 1. Node.js
+# 0. git (needed for skills clone)
+if ! command -v git >/dev/null 2>&1; then
+  echo "  ERROR: git not found. Install git and retry." >&2
+  exit 1
+fi
+
+# 1. Node.js (>=18)
 echo "[1/4] Node.js ..."
 if command -v node >/dev/null 2>&1; then
-  echo "  found: $(node --version)"
+  NODE_VER=$(node --version | sed 's/^v//')
+  NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1)
+  if [ "$NODE_MAJOR" -lt "$MIN_NODE_MAJOR" ]; then
+    echo "  ERROR: Node.js >= $MIN_NODE_MAJOR required (found v$NODE_VER). Upgrade from https://nodejs.org/ and retry." >&2
+    exit 1
+  fi
+  echo "  found: v$NODE_VER"
 else
-  echo "  ERROR: Node.js not found. Install from https://nodejs.org/ and retry." >&2
+  echo "  ERROR: Node.js not found. Install from https://nodejs.org/ (>= $MIN_NODE_MAJOR) and retry." >&2
   exit 1
 fi
 
@@ -23,18 +36,22 @@ fi
 echo "[2/4] npm install -g @scp3500/openvl ..."
 npm install -g @scp3500/openvl
 
-# 3. Python + deps check (npm postinstall does this too; explicit here for clarity)
+# 3. Python + deps check (required; fail loudly so 'Done' never lies)
 echo "[3/4] Python deps ..."
-if ! command -v python3 >/dev/null 2>&1 && ! command -v python >/dev/null 2>&1; then
-  echo "  WARN: Python not found. OpenVL needs Python + requests + Pillow." >&2
+if command -v python3 >/dev/null 2>&1; then
+  PY=$(command -v python3)
+elif command -v python >/dev/null 2>&1; then
+  PY=$(command -v python)
 else
-  PY=$(command -v python3 || command -v python)
-  if ! "$PY" -c "import requests, PIL" 2>/dev/null; then
-    echo "  WARN: missing 'requests' or 'pillow'. Run: $PY -m pip install requests pillow"
-  else
-    echo "  ok: requests + pillow present"
-  fi
+  echo "  ERROR: Python not found. OpenVL needs Python + requests + Pillow." >&2
+  exit 1
 fi
+if ! "$PY" -c "import requests, PIL" 2>/dev/null; then
+  echo "  ERROR: missing Python deps. Run: $PY -m pip install requests pillow" >&2
+  echo "  Then re-run this installer." >&2
+  exit 1
+fi
+echo "  ok: $PY (requests + pillow present)"
 
 # 4. Install skills for AI IDEs (skip dirs that already exist)
 echo "[4/4] skills ..."

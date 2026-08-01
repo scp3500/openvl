@@ -9,6 +9,7 @@ import os
 import sys
 import json
 import base64
+import re
 import subprocess
 import requests
 from pathlib import Path
@@ -192,6 +193,7 @@ def load_config():
                             pass
     if config["max_tokens"] is None:
         config["max_tokens"] = DEFAULT_MAX_TOKENS
+    config["api_base"] = normalize_api_base(config["api_base"])
     return config
 
 def load_prompt():
@@ -250,6 +252,31 @@ def resize_image(image_path, max_size=1024):
 def encode_image(image_path):
     with open(image_path, "rb") as f:
         return base64.b64encode(f.read()).decode()
+
+FULL_ENDPOINT_RE = re.compile(r"/(chat/completions|responses|messages|:?generateContent|:?streamGenerateContent)$", re.I)
+NATIVE_HOST_RE = re.compile(r"generativelanguage|googleapis\.com|anthropic\.com", re.I)
+
+
+def normalize_api_base(raw):
+    """自动补全 API 地址为完整 endpoint。
+
+    用户可填任意形态，自动规范化：
+      https://host/v1/chat/completions  → 不动（已是完整 endpoint）
+      https://host/v1                  → https://host/v1/chat/completions
+      https://host                      → https://host/v1/chat/completions
+      gemini/anthropic 原生地址         → 不动（不强行补 OpenAI 路径）
+    """
+    url = (raw or "").strip().strip('"').rstrip("/")
+    if not url or not url.startswith(("http://", "https://")):
+        return url
+    if FULL_ENDPOINT_RE.search(url):
+        return url
+    if NATIVE_HOST_RE.search(url):
+        return url
+    if url.endswith("/v1"):
+        return url + "/chat/completions"
+    return url + "/v1/chat/completions"
+
 
 def detect_api_type(url):
     """根据 URL 自动识别 API 类型"""

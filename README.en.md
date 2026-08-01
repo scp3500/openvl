@@ -91,11 +91,15 @@ OpenVL calls **your** multimodal API (OpenAI-compatible; Chat Completions / Resp
 
 Three ways, **priority: env vars > config file** (a file only fills gaps, never overrides env).
 
-**Way 1: command line** (easy, but lost on npm upgrade — see note below)
+**Way 1: command line** (chainable; `-api` auto-completes the path)
 
 ```bash
-openvl -key sk-xxx -api https://xxx/v1/chat/completions -model gpt-5.4-mini
+openvl -key sk-xxx -api https://host/v1 -model gpt-5.4-mini
 ```
+
+`-api` accepts any form and is auto-completed: `https://host` or `https://host/v1`
+becomes `https://host/v1/chat/completions` (a `/v1/responses` ending keeps the
+Responses format). Gemini / Claude native URLs are left untouched.
 
 **Way 2: config file** (recommended, survives upgrades)
 
@@ -122,7 +126,19 @@ export VISION_MODEL=gpt-5.4-mini
 > **Why put config under `~/.pi/agent/skills/openvl/`**: `openvl -key` writes into the npm
 > package dir, which is **overwritten on every `npm update`**; the skills dir or env vars survive.
 
-Run `openvl doctor` after configuring — it checks Python, dependencies, config loading and API connectivity in one shot.
+Run `openvl doctor` after configuring — it checks Python, dependencies, config loading and API connectivity in one shot:
+
+```
+$ openvl doctor
+OpenVL v1.1.76 diagnostics
+  ✓ Python 3.14
+  ✓ requests / Pillow
+  ✓ API Key set
+  ✓ API base https://host/v1/chat/completions
+  ✓ API connectivity OK (chat)
+```
+
+Or use `openvl setup` for an interactive config wizard.
 
 ---
 
