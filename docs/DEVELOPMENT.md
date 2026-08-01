@@ -195,6 +195,10 @@ git 提交不会自动发 npm。建议顺序：
 | 文档 | 给谁看 |
 |------|--------|
 | `README.md` / `README.en.md` | 用户安装与使用（含「AI 助手自动安装」区） |
+| `docs/README.md` | 文档索引（树状，按问题找文件） |
+| `docs/cli.md` | CLI 完整参考 |
+| `docs/mcp.md` | MCP 详细 |
+| `docs/troubleshooting.md` | 排障指南 |
 | `docs/index.html` | 产品介绍页 |
 | `docs/DEVELOPMENT.md` | 维护者：目录、副本、测试、发版 |
 | `integrations/README.md` | OpenCode / 各工具集成 |

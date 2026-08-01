@@ -182,11 +182,10 @@ cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
 **Q: 图里的文字转述不全/想完整提取？**
 默认提示词会完整转述文字场景。可加 `-P` 用你自己的提示词，或提问时明确"完整转述文字"。
 
-**Q: `openvl doctor` 提示 API 连不上？**
-检查 `VISION_API_BASE` 是否带 `/v1/chat/completions` 或 `/v1/responses` 结尾、key 是否有效、中转站是否支持该模型。
-
-**Q: 更新后配置丢了？**
-大概率是配置写进了 npm 包目录（`openvl -key` 写入位置）。把 `config.env` 移到 `~/.pi/agent/skills/openvl/` 后重配即可。
+**Q: 有问题/报错/装不上？**
+详细排障见 [docs/troubleshooting.md](docs/troubleshooting.md)；CLI 全参数见 [docs/cli.md](docs/cli.md)；
+MCP 细节见 [docs/mcp.md](docs/mcp.md)；各工具集成见 [integrations/README.md](integrations/README.md)。
+完整文档索引见 [docs/](docs/README.md)。
 
 ---
 

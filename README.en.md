@@ -182,11 +182,10 @@ Any OpenAI-compatible model that accepts image input. Cheap relay vision models 
 **Q: Text in the image comes out incomplete?**
 The default prompt transcribes text scenes fully. Use `-P` with your own prompt, or ask explicitly "transcribe all text".
 
-**Q: `openvl doctor` says the API is unreachable?**
-Check that `VISION_API_BASE` ends with `/v1/chat/completions` or `/v1/responses`, the key is valid, and the relay supports the model.
-
-**Q: Config lost after upgrading?**
-You likely wrote config into the npm package dir (`openvl -key` target). Move `config.env` to `~/.pi/agent/skills/openvl/` and reconfigure.
+**Q: Problems / errors / install issues?**
+See [docs/troubleshooting.md](docs/troubleshooting.md) for diagnosis, [docs/cli.md](docs/cli.md) for full CLI reference,
+[docs/mcp.md](docs/mcp.md) for MCP details, and [integrations/README.md](integrations/README.md) for tool integration.
+Full doc index: [docs/](docs/README.md).
 
 ---
 
