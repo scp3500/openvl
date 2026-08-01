@@ -578,7 +578,11 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
             prompt += "\n\n用户问题：" + query
         else:
             prompt = query
-    api_type = config.get("api_type") or detect_api_type(config["api_base"])
+    api_type = detect_api_type(config["api_base"])
+    forced = config.get("api_type") or ""
+    # URL 已带完整 endpoint 时 URL 优先（用户明确信号）；仅 URL 含糊（需补全）时用强制类型
+    if forced and not FULL_ENDPOINT_RE.search(config["api_base"]):
+        api_type = forced
 
     content = [{"type": "text", "text": prompt}]
     for s in sources:
@@ -619,7 +623,10 @@ def _probe_api(config):
     api_base = (config.get("api_base") or "").rstrip("/")
     api_key = config.get("api_key") or ""
     model = config.get("model") or "test"
-    api_type = config.get("api_type") or detect_api_type(api_base)
+    api_type = detect_api_type(api_base)
+    forced = config.get("api_type") or ""
+    if forced and not FULL_ENDPOINT_RE.search(api_base):
+        api_type = forced
     try:
         if api_type == "gemini":
             url = api_base

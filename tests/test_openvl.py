@@ -260,6 +260,19 @@ class TestConfigArgs(unittest.TestCase):
             "https://host/v1/chat/completions",
         )
 
+    def test_api_type_resolution_url_wins_on_full_endpoint(self):
+        """URL 已带完整 endpoint 时 URL 优先，强制 api_type 不覆盖（1.1.79 规则）。"""
+        v = self.v
+        # 模拟 describe_image 的解析：完整 /responses URL + 强制 chat → 仍是 responses
+        base = "https://host/v1/responses"
+        self.assertTrue(v.FULL_ENDPOINT_RE.search(base))
+        resolved = v.detect_api_type(base)  # URL 优先
+        self.assertEqual(resolved, "responses")
+        # 裸地址 + 强制 responses → responses
+        bare = "https://host"
+        self.assertFalse(v.FULL_ENDPOINT_RE.search(bare))
+        self.assertEqual(v.normalize_api_base(bare, "responses"), "https://host/v1/responses")
+
 
     def test_chained_config_args(self):
         updates = self.v._parse_config_args(
