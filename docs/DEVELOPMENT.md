@@ -166,7 +166,7 @@ git 提交不会自动发 npm。建议顺序：
 | 改了 A 目录，B 目录没变 | 多 skill 副本 | 只维护 git 工作区，再同步 |
 | MCP 正常 CLI 不正常（或相反） | Python 路径 / 配置源不同 | `openvl doctor`；MCP 与 CLI 应共用 `findPython` 与 config 规则 |
 | 剪贴板带问题像“没生效” | 旧版丢 query | 升级到含 fix 的版本；用法 `openvl -c "你的问题"` |
-| doctor 显示 API 类型不对 | base URL 不像标准路径 | 检查 `VISION_API_BASE` 是否含 `/responses`、`/chat/completions` 等 |
+| doctor 显示 API 类型不对 | base URL 不像标准路径 | `-api` 自动补全已处理路径；仍不对则检查域名是否输错，或地址含特殊渠道路径（如 `/api/v1/ai/.../responses`） |
 
 ---
 
@@ -200,8 +200,8 @@ AI agent（Claude Code / Pi 等）被要求“安装 openvl”时，按此执行
    - 写 `~/.pi/agent/skills/openvl/config.env`（推荐，升级不丢）
    - 环境变量 `VISION_API_KEY` / `VISION_API_BASE` / `VISION_MODEL`
 3. 验证：`openvl doctor`（应显示 Python/依赖/配置/API 连通全 ✓）
-4. 失败排查：`VISION_API_BASE` 须以 `/v1/chat/completions` 或 `/v1/responses` 结尾；
-   key 有效；模型支持图片输入；缺依赖则 `pip install requests pillow`。
+4. 失败排查：先 `openvl -cfg` 看生效地址（`-api` 自动补全路径，无需手动拼）；
+   仍失败则检查域名/key 有效性/模型支持图片；缺依赖则 `pip install requests pillow`。
 
 注意：`install.sh` 装完的 skills 是 git clone（含 `.git`），与 npm 包目录是两份副本；
 维护/改代码只在 git 工作区（见 §2），其他目录用同步命令更新。

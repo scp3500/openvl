@@ -40,7 +40,7 @@ pip install requests pillow
 | 现象 | 原因 | 处理 |
 |------|------|------|
 | 401/403 | key 无效或无权 | 检查 key 是否完整、是否过期 |
-| 404 | base 地址路径不对 | 确认 `VISION_API_BASE` 以 `/v1/chat/completions` 或 `/v1/responses` 结尾 |
+| 404 | base 地址路径不对 | 检查域名/路径是否正确；`-api` 会自动补全路径（`https://host` → `https://host/v1/chat/completions`），若手动写了错误路径则不会被纠正 |
 | 400 | payload 与网关要求不符 | 若提示 `stream` 相关，确认中转支持流式（doctor 探测已用流式） |
 | 429/503 | 限流或服务暂时不可用 | 等一会重试；换中转站 |
 | 超时 | 模型思考久或中转慢 | 调小 `-T` 思考档；换更快的中转；调大客户端超时 |

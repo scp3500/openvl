@@ -32,7 +32,7 @@
 | 命令 | 说明 |
 |------|------|
 | `openvl -key <KEY>` | 设置 API Key |
-| `openvl -api <BASE_URL>` | 设置 API 地址（自动识别 chat/responses/gemini/claude） |
+| `openvl -api <BASE_URL>` | 设置 API 地址（自动补全路径 + 自动识别 chat/responses/gemini/claude） |
 | `openvl -model <MODEL>` | 设置默认模型 |
 | `openvl -max-tokens <N>` | 设置默认 max_tokens |
 | `openvl -cfg` | 查看当前配置 |
