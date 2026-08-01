@@ -244,6 +244,22 @@ class TestConfigArgs(unittest.TestCase):
     def test_normalize_empty(self):
         self.assertEqual(self.v.normalize_api_base(""), "")
 
+    def test_normalize_with_api_type_responses(self):
+        v = self.v
+        self.assertEqual(
+            v.normalize_api_base("https://host/v1", "responses"),
+            "https://host/v1/responses",
+        )
+        self.assertEqual(
+            v.normalize_api_base("https://host", "responses"),
+            "https://host/v1/responses",
+        )
+        # 已是完整 endpoint 不受 api_type 影响
+        self.assertEqual(
+            v.normalize_api_base("https://host/v1/chat/completions", "responses"),
+            "https://host/v1/chat/completions",
+        )
+
 
     def test_chained_config_args(self):
         updates = self.v._parse_config_args(

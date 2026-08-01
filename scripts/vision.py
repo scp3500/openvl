@@ -69,6 +69,7 @@ CONFIG_FLAG_TO_KEY = {
     "-api": "base", "--set-base": "base",
     "-model": "model", "--set-model": "model",
     "-max-tokens": "max_tokens", "--set-max-tokens": "max_tokens",
+    "-api-type": "api_type", "--set-api-type": "api_type",
 }
 
 
@@ -101,6 +102,8 @@ def set_config(key, value):
         config["api_base"] = value
     elif key == "model":
         config["model"] = value
+    elif key == "api_type":
+        config["api_type"] = value.strip().lower()
     elif key == "max_tokens":
         try:
             config["max_tokens"] = int(value)
@@ -126,6 +129,9 @@ def set_config(key, value):
                 elif line_stripped.startswith("VISION_MODEL="):
                     lines.append(f"VISION_MODEL={config['model']}\n")
                     written.add("model")
+                elif line_stripped.startswith("VISION_API_TYPE="):
+                    lines.append(f"VISION_API_TYPE={config['api_type']}\n")
+                    written.add("api_type")
                 elif line_stripped.startswith("VISION_MAX_TOKENS="):
                     lines.append(f"VISION_MAX_TOKENS={config['max_tokens']}\n")
                     written.add("max_tokens")
@@ -137,6 +143,8 @@ def set_config(key, value):
         lines.append(f"VISION_API_BASE={config['api_base']}\n")
     if "model" not in written:
         lines.append(f"VISION_MODEL={config['model']}\n")
+    if "api_type" not in written and key == "api_type":
+        lines.append(f"VISION_API_TYPE={config['api_type']}\n")
     if "max_tokens" not in written and key == "max_tokens":
         lines.append(f"VISION_MAX_TOKENS={config['max_tokens']}\n")
     with open(ENV_FILE, "w", encoding="utf-8") as f:
@@ -145,7 +153,7 @@ def set_config(key, value):
 
 
 def load_config():
-    config = {"api_key": "", "api_base": "", "model": "", "max_tokens": None}
+    config = {"api_key": "", "api_base": "", "model": "", "max_tokens": None, "api_type": ""}
 
     # 优先级：环境变量 > 配置文件（文件只填空，不覆盖 env）
     env_key = os.environ.get("VISION_API_KEY", "")
@@ -157,6 +165,9 @@ def load_config():
     env_model = os.environ.get("VISION_MODEL", "")
     if env_model and not _is_placeholder(env_model):
         config["model"] = env_model
+    env_type = os.environ.get("VISION_API_TYPE", "")
+    if env_type and not _is_placeholder(env_type):
+        config["api_type"] = env_type.strip().lower()
     env_max = os.environ.get("VISION_MAX_TOKENS", "")
     if env_max:
         try:
@@ -185,6 +196,9 @@ def load_config():
                 elif line.startswith("VISION_MODEL=") and not _is_placeholder(line):
                     if not config["model"]:
                         config["model"] = line.split("=", 1)[1].strip()
+                elif line.startswith("VISION_API_TYPE=") and not _is_placeholder(line):
+                    if not config["api_type"]:
+                        config["api_type"] = line.split("=", 1)[1].strip().lower()
                 elif line.startswith("VISION_MAX_TOKENS="):
                     if config["max_tokens"] is None:
                         try:
@@ -193,7 +207,7 @@ def load_config():
                             pass
     if config["max_tokens"] is None:
         config["max_tokens"] = DEFAULT_MAX_TOKENS
-    config["api_base"] = normalize_api_base(config["api_base"])
+    config["api_base"] = normalize_api_base(config["api_base"], config["api_type"])
     return config
 
 def load_prompt():
@@ -257,7 +271,7 @@ FULL_ENDPOINT_RE = re.compile(r"/(chat/completions|responses|messages|:?generate
 NATIVE_HOST_RE = re.compile(r"generativelanguage|googleapis\.com|anthropic\.com", re.I)
 
 
-def normalize_api_base(raw):
+def normalize_api_base(raw, api_type=""):
     """自动补全 API 地址为完整 endpoint。
 
     用户可填任意形态，自动规范化：
@@ -265,6 +279,8 @@ def normalize_api_base(raw):
       https://host/v1                  → https://host/v1/chat/completions
       https://host                      → https://host/v1/chat/completions
       gemini/anthropic 原生地址         → 不动（不强行补 OpenAI 路径）
+
+    若显式指定 api_type（如 "responses"），按该类型补全路径。
     """
     url = (raw or "").strip().strip('"').rstrip("/")
     if not url or not url.startswith(("http://", "https://")):
@@ -273,6 +289,9 @@ def normalize_api_base(raw):
         return url
     if NATIVE_HOST_RE.search(url):
         return url
+    t = (api_type or "").strip().lower()
+    if t == "responses":
+        return (url + "/responses") if url.endswith("/v1") else (url + "/v1/responses")
     if url.endswith("/v1"):
         return url + "/chat/completions"
     return url + "/v1/chat/completions"
@@ -559,7 +578,7 @@ def describe_image(image_source=None, strength=None, thinking_effort=None, from_
             prompt += "\n\n用户问题：" + query
         else:
             prompt = query
-    api_type = detect_api_type(config["api_base"])
+    api_type = config.get("api_type") or detect_api_type(config["api_base"])
 
     content = [{"type": "text", "text": prompt}]
     for s in sources:
@@ -600,7 +619,7 @@ def _probe_api(config):
     api_base = (config.get("api_base") or "").rstrip("/")
     api_key = config.get("api_key") or ""
     model = config.get("model") or "test"
-    api_type = detect_api_type(api_base)
+    api_type = config.get("api_type") or detect_api_type(api_base)
     try:
         if api_type == "gemini":
             url = api_base
@@ -699,7 +718,7 @@ def doctor():
     chk("\u6a21\u578b", bool(c["model"]), c["model"] if c["model"] else "\u672a\u8bbe\u7f6e")
     chk("max_tokens", True, str(c.get("max_tokens") or DEFAULT_MAX_TOKENS))
     if c["api_base"]:
-        chk("API \u7c7b\u578b", True, detect_api_type(c["api_base"]))
+        chk("API \u7c7b\u578b", True, (c.get("api_type") or detect_api_type(c["api_base"])) + (f" (\u5f3a\u5236: {c['api_type']})" if c.get("api_type") else " (\u81ea\u52a8\u8bc6\u522b)"))
     if c["api_key"] and c["api_base"]:
         ok_api, msg = _probe_api(c)
         chk("API \u8fde\u901a", ok_api, msg)
@@ -839,6 +858,7 @@ if __name__ == "__main__":
         print("    openvl -api <地址>           # 设置 API 地址")
         print("    openvl -model <模型>         # 设置默认模型")
         print("    openvl -max-tokens <N>      # 设置默认 max_tokens")
+        print("    openvl -api-type <chat|responses|gemini|claude>  # 强制 API 格式（默认自动识别）")
         print("    openvl -cfg                  # 查看当前配置")
         print("    openvl doctor               # 环境诊断")
         print("    openvl setup                # 交互式配置")
@@ -852,23 +872,26 @@ if __name__ == "__main__":
         print(f"OpenVL v{OPENVL_VERSION}")
         sys.exit(0)
 
-    # 配置管理命令（支持连写：openvl -key X -api Y -model Z -max-tokens N）
+    # 配置管理命令（支持连写：openvl -key X -api Y -model Z -max-tokens N -api-type T）
     if sys.argv[1] in (
         "-key", "--set-key",
         "-api", "--set-base",
         "-model", "--set-model",
         "-max-tokens", "--set-max-tokens",
+        "-api-type", "--set-api-type",
     ):
         config_updates = _parse_config_args(sys.argv[1:])
-        for key, value in config_updates.items():
-            set_config(key, value)
+        # api_type 先写：base 的路径补全需要看到强制类型（否则裸地址会被补成 chat/completions）
+        for key in ("api_type", "base", "key", "model", "max_tokens"):
+            if key in config_updates:
+                set_config(key, config_updates[key])
         sys.exit(0)
     if sys.argv[1] in ("--show-config", "-cfg"):
         c = load_config()
         print(f"API 地址: {c['api_base']}")
         print(f"默认模型: {c['model']}")
         print(f"max_tokens: {c.get('max_tokens') or DEFAULT_MAX_TOKENS}")
-        print(f"API 类型: {detect_api_type(c.get('api_base') or '')}")
+        print(f"API 类型: {c.get('api_type') or detect_api_type(c.get('api_base') or '')}" + (f" (强制: {c['api_type']})" if c.get('api_type') else " (自动识别)"))
         key = c['api_key']
         if key:
             print(f"API Key: {key[:8]}...{key[-4:]}")
