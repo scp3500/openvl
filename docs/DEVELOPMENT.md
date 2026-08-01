@@ -1,7 +1,7 @@
-# OpenVL 开发与目录说明
+# OpenVL 开发与贡献说明
 
-这份文档说明：**代码真相源在哪、本地多份副本是什么、怎么测、怎么发版**。  
-面向维护者；普通用户看根目录 `README.md` 即可。
+这份文档说明：**仓库结构、怎么测、怎么发版、配置优先级**。  
+面向贡献者与维护者；普通用户看根目录 `README.md` 即可。
 
 ---
 
@@ -46,60 +46,40 @@ openvl/
 
 ---
 
-## 2. 唯一真相源（Source of Truth）
+## 2. 开发约定（Source of Truth）
 
 **开发与提交只认 Git 仓库本身。**
 
 - GitHub：`https://github.com/scp3500/openvl`
-- 维护者本机常见检出路径（示例）：
-  - `~/.pi/agent/skills/openvl`（Pi skill 直接用这份）
-  - 或任意你 `git clone` 的工作副本
+- 任意 `git clone` 的工作副本都可以开发
 
 原则：
 
 1. **改代码只在一个 git 工作区改**，改完 `git commit`。
-2. 其他目录若只是 skill 安装结果，用同步命令更新，不要各改各的。
+2. 其他目录若只是安装结果（npm 包 / skill 副本），用同步或重装更新，不要各改各的。
 3. `config.env` 是本机密钥，已在 `.gitignore`，**不要提交**。
 
 ---
 
-## 3. 本地多份副本（为什么看起来乱）
+## 3. 安装形态（同一份代码多种存在方式）
 
-OpenVL 会以多种方式被“装”到机器上，所以同一台电脑可能出现多份目录。  
-**这不等于仓库结构乱**，而是安装形态叠加。
+OpenVL 会以多种方式被安装，所以一台机器上可能出现多份目录。  
+**这不等于仓库结构乱**，而是安装形态叠加：
 
-| 路径（示例） | 是什么 | 怎么处理 |
-|--------------|--------|----------|
-| git 工作区（如 `~/.pi/agent/skills/openvl`） | **开发真相源** | 在这里改、提交 |
-| `~/.agents/skills/openvl` | 通用 agents skill 副本 | 从 git 工作区同步，勿分叉开发 |
-| `~/.claude/skills/openvl` | Claude Code skill 副本 | 同上 |
-| 全局 npm：`npm root -g` 下的 `@scp3500/openvl` | 已发布包安装结果 | 只通过 `npm publish` / `npm i -g` 更新 |
-| `~/openvl`、`~/openvl-backup` 等 | 历史骨架 / 备份 | 可归档或删除，**不要当现行代码** |
+| 形态 | 是什么 | 怎么处理 |
+|------|--------|----------|
+| git 工作区 | 开发真相源 | 在这里改、提交 |
+| skill 副本（`~/.agents/skills/openvl` 等） | AI IDE 安装结果 | 从 git 工作区同步，勿分叉开发 |
+| 全局 npm 包 | 已发布包安装结果 | 只通过 `npm publish` / `npm i -g` 更新 |
 
-### 推荐同步方式（开发机）
-
-在**已是 git 工作区**的目录提交后，把 skill 文件同步到其他 skill 路径（示例，按需改路径）：
+同步 skill 副本时跳过 `config.env` 与 `.git`（保留用户配置）：
 
 ```bash
-# 在 git 工作区
-npm test
-
-# 同步到其他 skill 目录（覆盖代码，保留对方 config.env）
 rsync -a --exclude config.env --exclude .git \
-  ./ ~/.agents/skills/openvl/
-rsync -a --exclude config.env --exclude .git \
-  ./ ~/.claude/skills/openvl/
+  ./ <target-skills-dir>/openvl/
 ```
 
-Windows 没有 rsync 时，可用 `openvl setup` 里的 skills 安装逻辑，或手动复制（同样跳过 `config.env`）。
-
-全局 CLI 与 skill 版本不一致时：
-
-```bash
-npm list -g @scp3500/openvl
-# 开发未发布：用 skill 目录里的 scripts 直接测
-# 已发布：npm update -g @scp3500/openvl
-```
+全局 CLI 与 skill 版本不一致是预期现象（git 最新 ≠ npm 已发布）。
 
 ---
 
