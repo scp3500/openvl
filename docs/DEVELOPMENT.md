@@ -85,7 +85,7 @@ rsync -a --exclude config.env --exclude .git \
 
 ## 4. 配置优先级
 
-运行时配置项：`VISION_API_KEY` / `VISION_API_BASE` / `VISION_MODEL` / `VISION_MAX_TOKENS`
+运行时配置项：`VISION_API_KEY` / `VISION_API_BASE` / `VISION_MODEL` / `VISION_MAX_TOKENS` / `VISION_API_TYPE`（可选）
 
 **优先级：环境变量 > 配置文件（文件只填空，不覆盖 env）**
 
@@ -106,6 +106,7 @@ CLI 也可写配置：
 openvl -key sk-xxx
 openvl -api https://.../v1/chat/completions
 openvl -model your-model
+openvl -api-type responses   # 可选：强制 API 格式
 openvl -max-tokens 32768
 openvl -cfg
 openvl doctor

@@ -34,6 +34,7 @@
 | `openvl -key <KEY>` | 设置 API Key |
 | `openvl -api <BASE_URL>` | 设置 API 地址（自动补全路径 + 自动识别 chat/responses/gemini/claude） |
 | `openvl -model <MODEL>` | 设置默认模型 |
+| `openvl -api-type <chat\|responses\|gemini\|claude>` | 强制 API 格式（默认按 URL 自动识别；URL 已完整时 URL 优先） |
 | `openvl -max-tokens <N>` | 设置默认 max_tokens |
 | `openvl -cfg` | 查看当前配置 |
 | `openvl doctor` | 自检：Python / 依赖 / 配置 / API 连通 |

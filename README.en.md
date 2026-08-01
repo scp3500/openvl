@@ -101,6 +101,16 @@ openvl -key sk-xxx -api https://host/v1 -model gpt-5.4-mini
 becomes `https://host/v1/chat/completions` (a `/v1/responses` ending keeps the
 Responses format). Gemini / Claude native URLs are left untouched.
 
+Optional `-api-type <chat|responses|gemini|claude>` forces the API format:
+
+```bash
+openvl -api https://host/v1 -api-type responses   # bare URL + forced responses
+```
+
+Rule: **a full endpoint in the URL wins** (`/v1/responses` means responses);
+`-api-type` only applies when the URL is ambiguous (bare host or `/v1`) and
+drives both completion and format. Default is auto-detect (chat).
+
 **Way 2: config file** (recommended, survives upgrades)
 
 ```bash

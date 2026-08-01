@@ -101,6 +101,15 @@ openvl -key sk-xxx -api https://host/v1 -model gpt-5.4-mini
 会被补成 `https://host/v1/chat/completions`（`/v1/responses` 结尾则用 Responses 格式）。
 Gemini / Claude 原生地址不会被强行改写。
 
+可选 `-api-type <chat|responses|gemini|claude>` 强制 API 格式：
+
+```bash
+openvl -api https://host/v1 -api-type responses   # 裸地址 + 强制 responses
+```
+
+规则：**URL 已带完整 endpoint 时 URL 优先**（填 `/v1/responses` 就是 responses）；
+仅 URL 含糊（裸地址/`/v1`）时 `-api-type` 决定补全方向与格式。不设则自动识别，默认 chat。
+
 **方式 2：配置文件**（推荐，升级不丢）
 
 ```bash
