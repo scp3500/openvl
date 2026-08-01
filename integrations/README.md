@@ -6,14 +6,14 @@
 
 插件自动把粘贴的图片转为文本，AI 通过 `openvl --base64` 读取。
 
-1. 复制插件文件：
+1. 复制插件文件（注意扩展名是 `.mjs`）：
    ```bash
    mkdir -p ~/.config/opencode/plugin
-   cp integrations/opencode/openvl-image.ts ~/.config/opencode/plugin/
+   cp integrations/opencode/openvl-image.mjs ~/.config/opencode/plugin/
    ```
 2. 编辑 `~/.config/opencode/opencode.json`，添加 `plugin` 字段：
    ```json
-   "plugin": ["./plugin/openvl-image.ts"]
+   "plugin": ["./plugin/openvl-image.mjs"]
    ```
    完整示例见 `integrations/opencode/opencode.example.json`。
 3. 重启 OpenCode

@@ -8,5 +8,5 @@
       }
     }
   },
-  "plugin": ["./plugin/openvl-image.ts"]
+  "plugin": ["./plugin/openvl-image.mjs"]
 }

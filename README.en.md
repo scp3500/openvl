@@ -56,10 +56,13 @@ This allows AI tools (Pi / Claude Code etc.) to auto-call openvl when they encou
 | `openvl -c your question` | Clipboard + question |
 | `openvl --stdin` | Read data URI from stdin |
 | `openvl --base64 iVBOR...` | Pass raw base64 |
-| `openvl <img> -t 0.3` | Temperature |
+| `openvl <img> -t 0.3` | Temperature (0~1) |
 | `openvl <img> -T high` | Reasoning effort |
 | `openvl <img> -s 512` | Max dimension (default 1024) |
+| `openvl <img> -m 8192` | Max output tokens (default 16384) |
+| `openvl -P` | Skip the default description prompt |
 | `openvl -cfg` | Show config |
+| `openvl doctor` | Self-check: Python/deps/config/API connectivity |
 
 Multiple images: `openvl a.png b.png describe these`
 
@@ -73,13 +76,18 @@ Multiple images: `openvl a.png b.png describe these`
 
 ## Configuration
 
-Priority: env vars > npm package dir > skills dir
+Priority: env vars > package-dir config.env > skills-dir config.env (files only fill gaps, never override env)
 
 ```ini
 VISION_API_KEY=your-api-key
 VISION_API_BASE=https://your-proxy/v1/chat/completions
 VISION_MODEL=model-id
+VISION_MAX_TOKENS=16384   # optional, default 16384
 ```
+
+- `VISION_API_BASE` auto-detects three endpoint types: `/v1/chat/completions` (OpenAI), `/v1/responses` (Responses API), and Gemini / Claude native URLs
+- **Recommended: put config.env under `~/.agents/skills/openvl/`** (or `~/.pi/agent/skills/openvl/`). Writing with `openvl -key/-api/-model` targets the npm package dir, which is **overwritten on npm upgrade**; skills dir or env vars survive upgrades
+- Run `openvl doctor` to self-check environment, dependencies, config loading and API connectivity in one shot
 
 ## Tool Integration
 
@@ -137,6 +145,16 @@ Text first, image last — for API prefix caching.
 | `scripts/mcp_server.js` | MCP server |
 | `prompts/describe.md` | Description prompt template |
 | `SKILL.md` | AI skill definition |
+| `tests/test_openvl.py` | Unit/smoke tests |
+
+## Testing
+
+```bash
+npm test                  # or: python -X utf8 tests/test_openvl.py
+npm run test:e2e          # live API test (requires config)
+```
+
+Offline-safe by default; `--e2e` hits the real vision API.
 
 ## License
 

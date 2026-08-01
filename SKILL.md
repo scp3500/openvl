@@ -1,7 +1,7 @@
 ---
 name: openvl
 description: 让无视觉能力的 AI 模型看懂图片。支持本地图片、URL、剪贴板截图、base64 数据、stdin 管道。用户提问会传给视觉模型直接回答。也支持 MCP 服务器供 Cherry Studio 等工具调用。
-version: 1.1.5
+version: 1.1.74
 credentials:
   - name: VISION_API_KEY
     required: true

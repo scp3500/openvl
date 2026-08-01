@@ -59,7 +59,10 @@ git clone https://github.com/scp3500/openvl.git ~/.agents/skills/openvl
 | `openvl <图片> -t 0.3` | 温度（0~1） |
 | `openvl <图片> -T high` | 思考深度 |
 | `openvl <图片> -s 512` | 最大边长（默认1024） |
+| `openvl <图片> -m 8192` | 最大输出 token（默认 16384） |
+| `openvl -P` | 跳过默认描述提示词 |
 | `openvl -cfg` | 查看当前配置 |
+| `openvl doctor` | 自检：Python/依赖/配置/API 连通 |
 
 多个图片一起传：`openvl a.png b.png 描述这些图`
 
@@ -75,13 +78,18 @@ AI 会使用 `describe_image` / `describe_clipboard` 工具。
 
 ## 配置
 
-优先级：环境变量 > npm 包目录 > skills 目录
+优先级：环境变量 > 包目录 config.env > skills 目录 config.env（文件只填空，不覆盖 env）
 
 ```ini
 VISION_API_KEY=你的密钥
 VISION_API_BASE=https://你的中转站/v1/chat/completions
 VISION_MODEL=模型ID
+VISION_MAX_TOKENS=16384   # 可选，默认 16384
 ```
+
+- `VISION_API_BASE` 支持三种接口：`/v1/chat/completions`（OpenAI）、`/v1/responses`（Responses）、Gemini / Claude 原生地址，自动识别
+- **推荐把 config.env 放在 `~/.pi/agent/skills/openvl/` 下**（或 `~/.agents/skills/openvl/`）：用 `openvl -key/-api/-model` 写入的是 npm 包目录，**npm 升级会被覆盖丢失**；放 skills 目录或环境变量则升级不丢
+- 配置好后可 `openvl doctor` 自检：环境、依赖、配置读取、API 连通一次看清
 
 ## 各工具集成
 

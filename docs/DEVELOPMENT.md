@@ -12,7 +12,7 @@ openvl/
 ├── bin/
 │   ├── openvl            # Node 入口：找 Python / 转发 --mcp
 │   ├── openvl.cmd        # Windows shim
-│   └── postinstall.js    # npm 安装后检查依赖
+│   └── postinstall.js    # npm 安装后检查依赖（不再生成 config.env 模板，见下）
 ├── scripts/
 │   ├── vision.py         # 核心：配置、读图、多 API、CLI
 │   └── mcp_server.js     # MCP 薄封装（stdio/http → vision.py）
@@ -114,6 +114,11 @@ npm list -g @scp3500/openvl
 1. 当前包 / skill 目录下的 `config.env`
 2. `~/.pi/agent/skills/openvl/config.env`
 3. `~/.agents/skills/openvl/config.env`
+
+> **1.1.73 起 postinstall 不再自动复制 `config.env.example` 到包目录**（旧版会在包目录生成模板，
+> 且 `load_config` 曾只过滤 KEY 的“你的”占位、BASE/MODEL 不过滤，导致模板遮蔽真实配置）。
+> 现在安装后提示用 `openvl setup` 或手动放 `~/.pi/agent/skills/openvl/config.env`；
+> `load_config` 对占位值（你的/模型ID/your 等）统一跳过。
 
 CLI 也可写配置：
 
